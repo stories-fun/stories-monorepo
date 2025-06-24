@@ -1,0 +1,82 @@
+erDiagram
+    Users ||--o{ Stories : "authors"
+    Users ||--o{ Stories : "approves"
+    Users ||--o{ StoryPurchases : "purchases"
+    Users ||--|| UserTokens : "owns"
+    Users ||--o{ Comments : "writes"
+    Users ||--o{ StorySubmissions : "submits"
+    Users ||--o{ CommentLikes : "likes"
+    
+    Stories ||--o{ StoryPurchases : "purchased"
+    Stories ||--o{ Comments : "receives"
+    Stories ||--|| StorySubmissions : "from"
+    
+    Comments ||--o{ Comments : "parent-child"
+    Comments ||--o{ CommentLikes : "liked"
+    
+    Users {
+        UUID user_id PK
+        VARCHAR username
+        VARCHAR email
+        VARCHAR wallet_address
+        ENUM user_type "reader, author, manager"
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    
+    Stories {
+        UUID story_id PK
+        UUID author_id FK
+        UUID approved_by FK
+        VARCHAR title
+        TEXT content
+        DECIMAL price_tokens
+        ENUM status "submitted, approved, published"
+        TIMESTAMP created_at
+        TIMESTAMP published_at
+    }
+    
+    StoryPurchases {
+        UUID purchase_id PK
+        UUID buyer_id FK
+        UUID story_id FK
+        DECIMAL tokens_paid
+        VARCHAR transaction_hash
+        TIMESTAMP purchased_at
+    }
+    
+    Comments {
+        UUID comment_id PK
+        UUID story_id FK
+        UUID user_id FK
+        UUID parent_comment_id FK "NULL for root comments"
+        TEXT content
+        INT likes_count
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    
+    UserTokens {
+        UUID token_id PK
+        UUID user_id FK
+        DECIMAL balance
+        TIMESTAMP last_updated
+        BOOLEAN wallet_sync_status
+    }
+    
+    StorySubmissions {
+        UUID submission_id PK
+        UUID user_id FK
+        UUID story_id FK
+        ENUM submission_type
+        ENUM status "pending, approved, rejected"
+        TIMESTAMP submitted_at
+        TIMESTAMP reviewed_at
+    }
+    
+    CommentLikes {
+        UUID like_id PK
+        UUID comment_id FK
+        UUID user_id FK
+        TIMESTAMP created_at
+    }
