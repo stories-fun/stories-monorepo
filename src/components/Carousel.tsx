@@ -87,13 +87,11 @@ export default function Carousel({
                 >
                   {/* Title centered over the image */}
                   {active && (
-<div className="flex justify-center mb-2">
-  <div className="relative inline-block bg-white px-10 py-4 font-extrabold text-2xl text-black">
-    {item.title}
-  </div>
-</div>
-
-
+                    <div className="flex justify-center mb-2">
+                      <div className="relative inline-block bg-white px-10 py-4 font-extrabold text-2xl text-black">
+                        {item.title}
+                      </div>
+                    </div>
                   )}
 
                   <div

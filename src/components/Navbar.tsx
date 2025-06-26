@@ -28,7 +28,7 @@ const Navbar = () => {
 
           <Link
             href="/our-story"
-            className="text-[#FFEEBA] font-bold hover:text-gray-300 transition-colors text-sm sm:text-lg whitespace-nowrap"
+            className="text-[#FFEEBA] font-bold hover:underline transition-colors text-sm sm:text-lg whitespace-nowrap"
           >
             Our Story
           </Link>
