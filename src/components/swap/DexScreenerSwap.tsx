@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 
 // STORIES token constants
 const STORIES_TOKEN_ADDRESS = new PublicKey('EvA88escD87zrzG7xo8WAM8jW6gJ5uQfeLL8Fj6DUZ2Q');
-const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS!;
 
 const STORIES_DECIMALS = 6;
 const PAIR_ADDRESS = 'DwAnxaVPCkLCKigNt5kNZwUmJ3rbiVFmvLxgEgFyogAL';
