@@ -1,6 +1,28 @@
+# Node modules
 node_modules
+
+# Logs
 npm-debug.log
+yarn-error.log
+
+# Local env
+.env*
+!.env.example
+
+# Next.js build output
+.next
+out
+dist
+
+# Git
+.git
+.gitignore
+
+# Docker
 Dockerfile
 .dockerignore
-.next
-.env.local
+
+# OS / editor metadata
+.DS_Store
+*.swp
+*.swo
