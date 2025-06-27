@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/Abhishekk24/stories-monorepo
+  IMAGE_NAME: ghcr.io/abhishekk24/stories-monorepo
 
 jobs:
   build-and-push:
