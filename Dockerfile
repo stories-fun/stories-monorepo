@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 
 # Install system dependencies
-RUN apk add --no-cache python3 make g++ linux-headers eudev-dev git && \
+RUN apk add --no-cache python3 make g++ linux-headers git && \
     ln -sf /usr/bin/python3 /usr/bin/python && \
     npm install -g pnpm@9
 
@@ -36,9 +36,13 @@ RUN NEXT_PUBLIC_PROJECT_ID=${NEXT_PUBLIC_PROJECT_ID} \
     pnpm run build
 
 # Stage 2: Runner
+
 FROM node:20-alpine AS runner
 
 WORKDIR /app
+
+# Install pnpm for running the app
+RUN npm install -g pnpm@9
 
 # Copy production files with correct ownership
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
@@ -54,7 +58,6 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
-# These will be passed at runtime rather than build-time
 ENV NEXT_PUBLIC_PROJECT_ID=""
 ENV NEXT_PUBLIC_HELIUS_API_KEY=""
 
