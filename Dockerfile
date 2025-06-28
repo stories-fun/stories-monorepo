@@ -1,9 +1,11 @@
 # Stage 1: Builder
 FROM node:20-alpine AS builder
 
-# Declare build-time arguments early
+# Declare build-time arguments early - ADD THE MISSING SUPABASE VARIABLES
 ARG NEXT_PUBLIC_PROJECT_ID
 ARG NEXT_PUBLIC_HELIUS_API_KEY
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 # Install system dependencies
 RUN apk add --no-cache python3 make g++ linux-headers git && \
@@ -30,9 +32,11 @@ RUN pnpm add \
 # Copy all source files
 COPY . .
 
-# Build the project (variables already declared above via ARG)
+# Build the project - ADD THE MISSING SUPABASE VARIABLES
 RUN NEXT_PUBLIC_PROJECT_ID=${NEXT_PUBLIC_PROJECT_ID} \
     NEXT_PUBLIC_HELIUS_API_KEY=${NEXT_PUBLIC_HELIUS_API_KEY} \
+    NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY} \
     pnpm run build
 
 # Stage 2: Runner
@@ -56,9 +60,11 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
-# Optional: expose values in runtime container (not needed unless runtime client access)
+# Runtime environment variables - ADD THE MISSING SUPABASE VARIABLES
 ENV NEXT_PUBLIC_PROJECT_ID=""
 ENV NEXT_PUBLIC_HELIUS_API_KEY=""
+ENV NEXT_PUBLIC_SUPABASE_URL=""
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=""
 
 EXPOSE 3000
 CMD ["pnpm", "start"]
