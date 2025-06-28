@@ -31,30 +31,27 @@ export function CustomCard({
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="bg-[#141414] overflow-hidden border border-neutral-800 text-white max-w-[354px] shadow-lg">
-      {/* Author */}
-      {author && authorImage && (
-        <div className="flex items-center gap-3 px-4 pt-4">
-          <Image
-            src={authorImage}
-            alt={author}
-            width={40}
-            height={40}
-            className="rounded-full"
-          />
-          <span className="font-semibold">{author}</span>
-        </div>
-      )}
-
-      {/* Image */}
-      <div className="mt-4">
+    <div className="relative overflow-hidden border border-neutral-800 text-white max-w-[354px] shadow-lg">
+      {/* Image with author overlay */}
+      <div className="relative w-full h-64">
         <Image
           src={image}
           alt={title}
-          width={500}
-          height={300}
-          className="object-cover w-full h-48"
+          fill
+          className="object-cover"
         />
+        {author && authorImage && (
+          <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 px-3 py-2 rounded-br-xl z-10">
+            <Image
+              src={authorImage}
+              alt={author}
+              width={32}
+              height={32}
+              className="rounded-full"
+            />
+            <span className="font-semibold text-sm">{author}</span>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -64,12 +61,13 @@ export function CustomCard({
             {title}
           </h3>
           {timeToRead && (
-            <span className="flex items-center text-sm text-[#141414] text-nowrap">
+            <span className="flex items-center text-sm text-nowrap">
               <Clock5 size={16} className="mr-1" />
               {timeToRead}
             </span>
           )}
         </div>
+
         <div className="flex items-center gap-2 mb-4 px-4">
           {price !== undefined && (
             <span className={`font-bold text-lg ${changeColor}`}>{price}</span>
@@ -84,6 +82,7 @@ export function CustomCard({
             </>
           )}
         </div>
+
         {url && (
           <div className="border-t border-[#141414] pt-4">
             <div className="px-4">
