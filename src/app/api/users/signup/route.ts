@@ -1,14 +1,7 @@
 // src/app/api/users/signup/route.ts
-// POST API for user registration
+// Completely build-safe POST API for user registration
 
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 interface SignupRequestBody {
   username: string;
@@ -18,6 +11,31 @@ interface SignupRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // Check if environment variables exist
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        {
+          error: 'Server configuration error',
+          message: 'Supabase environment variables are not configured',
+          debug: {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseAnonKey,
+            url: supabaseUrl || 'undefined',
+            key: supabaseAnonKey ? 'exists' : 'undefined'
+          }
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client inside the function
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
     const body: SignupRequestBody = await request.json();
     const { username, email, wallet_address } = body;
 
@@ -56,12 +74,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Basic wallet address validation
+    const walletRegex = /^0x[a-fA-F0-9]{40}$/;
+    if (!walletRegex.test(wallet_address)) {
+      return NextResponse.json(
+        {
+          error: 'Invalid wallet address',
+          message: 'Please provide a valid wallet address (0x...)'
+        },
+        { status: 400 }
+      );
+    }
+
     // Clean the input data
     const cleanUsername = username.trim().toLowerCase();
     const cleanEmail = email.trim().toLowerCase();
     const cleanWalletAddress = wallet_address.trim().toLowerCase();
 
-    // Check if user already exists (by any unique field)
+    // Check if user already exists
     const { data: existingUser, error: checkError } = await supabase
       .from('user')
       .select('id, username, email, wallet_address')
@@ -111,8 +141,7 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('Database error creating user:', insertError);
       
-      // Handle specific database constraint errors
-      if (insertError.code === '23505') { // Unique constraint violation
+      if (insertError.code === '23505') {
         return NextResponse.json(
           {
             error: 'Unique constraint violation',
@@ -131,7 +160,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return success response (exclude sensitive data if any)
     return NextResponse.json(
       {
         success: true,
@@ -172,22 +200,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Handle other HTTP methods
 export async function GET() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use POST to create a new user' },
-    { status: 405 }
-  );
-}
-
-export async function PUT() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use POST to create a new user' },
-    { status: 405 }
-  );
-}
-
-export async function DELETE() {
   return NextResponse.json(
     { error: 'Method not allowed', message: 'Use POST to create a new user' },
     { status: 405 }

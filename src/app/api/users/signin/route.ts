@@ -1,17 +1,35 @@
 // src/app/api/users/signin/route.ts
-// GET API for user authentication/signin using wallet address only
+// Completely build-safe GET API for user signin using wallet address
 
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-// Initialize Supabase client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export async function GET(request: NextRequest) {
   try {
+    // Get environment variables
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // Check if environment variables exist
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        {
+          error: 'Server configuration error',
+          message: 'Supabase environment variables are not configured',
+          debug: {
+            hasUrl: !!supabaseUrl,
+            hasKey: !!supabaseAnonKey,
+            url: supabaseUrl || 'undefined',
+            key: supabaseAnonKey ? 'exists' : 'undefined'
+          }
+        },
+        { status: 500 }
+      );
+    }
+
+    // Create Supabase client inside the function using dynamic import
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
     const { searchParams } = new URL(request.url);
     
     // Get wallet address parameter
@@ -32,7 +50,7 @@ export async function GET(request: NextRequest) {
     // Clean and validate wallet address format
     const cleanWalletAddress = wallet_address.trim().toLowerCase();
     
-    // Basic wallet address validation (assuming Ethereum-like address)
+    // Basic wallet address validation
     const walletRegex = /^0x[a-fA-F0-9]{40}$/;
     if (!walletRegex.test(cleanWalletAddress)) {
       return NextResponse.json(
@@ -103,28 +121,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Handle other HTTP methods
 export async function POST() {
   return NextResponse.json(
     { 
       error: 'Method not allowed', 
-      message: 'Use GET with wallet_address parameter to sign in. For signup, use POST /api/users/signup',
+      message: 'Use GET with wallet_address parameter to sign in',
       example: 'GET /api/users/signin?wallet_address=0x...'
     },
-    { status: 405 }
-  );
-}
-
-export async function PUT() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use GET to sign in' },
-    { status: 405 }
-  );
-}
-
-export async function DELETE() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use GET with wallet_address parameter to sign in' },
     { status: 405 }
   );
 }
