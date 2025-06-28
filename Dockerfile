@@ -1,6 +1,10 @@
 # Stage 1: Builder
 FROM node:20-alpine AS builder
 
+# Declare build-time arguments early
+ARG NEXT_PUBLIC_PROJECT_ID
+ARG NEXT_PUBLIC_HELIUS_API_KEY
+
 # Install system dependencies
 RUN apk add --no-cache python3 make g++ linux-headers git && \
     ln -sf /usr/bin/python3 /usr/bin/python && \
@@ -14,7 +18,7 @@ COPY package.json pnpm-lock.yaml ./
 # Install all dependencies including devDependencies
 RUN pnpm install --ignore-scripts --strict-peer-dependencies=false
 
-# Install required Solana dependencies
+# Install required Solana dependencies (optional if already in package.json)
 RUN pnpm add \
     pino-pretty \
     @solana/wallet-adapter-base \
@@ -26,25 +30,19 @@ RUN pnpm add \
 # Copy all source files
 COPY . .
 
-# Build-time environment variables
-ARG NEXT_PUBLIC_PROJECT_ID
-ARG NEXT_PUBLIC_HELIUS_API_KEY
-
-# Build the project
+# Build the project (variables already declared above via ARG)
 RUN NEXT_PUBLIC_PROJECT_ID=${NEXT_PUBLIC_PROJECT_ID} \
     NEXT_PUBLIC_HELIUS_API_KEY=${NEXT_PUBLIC_HELIUS_API_KEY} \
     pnpm run build
 
 # Stage 2: Runner
-
 FROM node:20-alpine AS runner
 
 WORKDIR /app
 
-# Install pnpm for running the app
 RUN npm install -g pnpm@9
 
-# Copy production files with correct ownership
+# Copy production build output
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 COPY --chown=node:node --from=builder /app/.next ./.next
 COPY --chown=node:node --from=builder /app/public ./public
@@ -58,6 +56,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 
+# Optional: expose values in runtime container (not needed unless runtime client access)
 ENV NEXT_PUBLIC_PROJECT_ID=""
 ENV NEXT_PUBLIC_HELIUS_API_KEY=""
 
