@@ -31,7 +31,7 @@ export function CustomCard({
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="bg-[#141414] overflow-hidden border border-neutral-800 text-white max-w-sm shadow-lg">
+    <div className="bg-[#141414] overflow-hidden border border-neutral-800 text-white max-w-[354px] shadow-lg">
       {/* Author */}
       <div className="flex items-center gap-3 px-4 pt-4">
         <Image
@@ -56,8 +56,8 @@ export function CustomCard({
       </div>
 
       {/* Content */}
-      <div className="bg-[#FFF6C9] text-[#141414] px-4 py-4">
-        <div className="flex justify-between items-center mb-2">
+      <div className="bg-[#FFF6C9] text-[#141414] py-4">
+        <div className="flex justify-between items-center px-4">
           <h3 className="font-extrabold text-[24px] leading-[146%] tracking-[0%] mr-2">
             {title}
           </h3>
@@ -66,7 +66,7 @@ export function CustomCard({
             {timeToRead}
           </span>
         </div>
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 px-4">
           <span className={`font-bold text-lg ${changeColor}`}>{price}</span>
           <span className="text-[#141414] text-2xl font-bold">·</span>
           <span className={`text-sm font-medium ${changeColor}`}>
@@ -74,9 +74,16 @@ export function CustomCard({
             {change}%
           </span>
         </div>
-        <Link href={url}>
-          <CustomButton text="Read snippet" className="w-full justify-center" />
-        </Link>
+        <div className="border-t border-[#141414] pt-4">
+          <div className="px-4">
+            <Link href={url}>
+              <CustomButton
+                text="Read snippet"
+                className="w-full justify-center"
+              />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
