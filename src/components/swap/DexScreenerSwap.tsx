@@ -196,6 +196,13 @@ export const DexScreenerSwap = () => {
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 const [quoteExpiry, setQuoteExpiry] = useState<number | null>(null);
 
+const calculateSolToUsd = (solAmount: string) => {
+  if (!pairData || !solAmount) return '0.00';
+  const solPriceUsd = parseFloat(formatSolUsdPrice(pairData));
+  const amount = parseFloat(solAmount) || 0;
+  return (amount * solPriceUsd).toFixed(2);
+};
+
 const fetchPairData = async () => {
   try {
     const [pairResponse, tokenResponse] = await Promise.all([
@@ -351,363 +358,259 @@ const executeSwap = async () => {
   }
 
   return (
-    <div className="bg-gray-800/50 rounded-xl overflow-hidden shadow-2xl">
-      <div className="flex border-b border-gray-700">
+    <div className="bg-[#1A1A1A] rounded-2xl overflow-hidden shadow-lg border border-[#2A2A2A] max-w-2xl mx-auto">
+      {/* Header with logo */}
+      <div className="p-6 border-b border-[#2A2A2A]">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            {pairData?.baseToken.logoURI && (
+              <img 
+                src={pairData.baseToken.logoURI} 
+                alt={pairData.baseToken.symbol}
+                className="w-10 h-10 rounded-full"
+              />
+            )}
+            <h2 className="text-2xl font-bold text-white">STORIES Swap</h2>
+          </div>
+          <div className={`text-xl font-bold ${
+            (pairData?.priceChange.h24 || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+          }`}>
+            {(pairData?.priceChange.h24 || 0).toFixed(2)}%
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex border-b border-[#2A2A2A]">
         <button
           onClick={() => setActiveTab('swap')}
-          className={`flex-1 py-4 font-medium ${activeTab === 'swap' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+          className={`flex-1 py-4 font-medium text-lg ${
+            activeTab === 'swap' 
+              ? 'text-white border-b-2 border-[#00A3FF]' 
+              : 'text-[#8A8A8A] hover:text-white'
+          }`}
         >
           Swap
         </button>
         <button
           onClick={() => setActiveTab('info')}
-          className={`flex-1 py-4 font-medium ${activeTab === 'info' ? 'text-blue-400 border-b-2 border-blue-400' : 'text-gray-400'}`}
+          className={`flex-1 py-4 font-medium text-lg ${
+            activeTab === 'info' 
+              ? 'text-white border-b-2 border-[#00A3FF]' 
+              : 'text-[#8A8A8A] hover:text-white'
+          }`}
         >
           Token Info
         </button>
       </div>
 
-      {activeTab === 'swap' ? (
-        <div className="p-6">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-gray-300">You pay</label>
-              <span className="text-sm text-gray-400">
-                Balance: {solBalance !== null ? solBalance.toFixed(4) : '-'} SOL
-              </span>
-            </div>
-            <div className="bg-gray-700 rounded-lg p-4 flex items-center">
-              <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 bg-transparent text-white text-xl outline-none"
-                placeholder="0.0"
-                min="0"
-                step="0.1"
-              />
-              <div className="flex items-center bg-gray-600 rounded-full px-3 py-1">
-                <span className="font-medium">SOL</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-gray-300">You receive</label>
-              <span className="text-sm text-gray-400">
-                Balance: {STORIESBalance !== null ? STORIESBalance.toLocaleString() : '-'} STORIES
-              </span>
-            </div>
-            <div className="bg-gray-700 rounded-lg p-4 flex items-center">
-              <input
-                type="text"
-                value={quote ? (parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS) : '0.0'}
-                readOnly
-                className="flex-1 bg-transparent text-white text-xl outline-none"
-              />
-              <div className="flex items-center bg-gray-600 rounded-full px-3 py-1">
-                <span className="font-medium">STORIES</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-300 mb-2">Slippage Tolerance</label>
-            <div className="flex gap-2">
-              {[0.5, 1, 2].map((value) => (
-                <button
-                  key={value}
-                  onClick={() => setSlippage(value)}
-                  className={`flex-1 py-2 rounded-lg ${slippage === value ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
-                >
-                  {value}%
-                </button>
-              ))}
-              <div className="relative flex-1">
-                <input
-                  type="number"
-                  value={slippage}
-                  onChange={(e) => setSlippage(Math.min(10, Math.max(0.1, parseFloat(e.target.value) || 0.5)))}
-                  className="w-full py-2 px-3 bg-gray-700 rounded-lg text-right text-gray-300 outline-none"
-                  min="0.1"
-                  max="10"
-                  step="0.1"
-                />
-                <span className="absolute right-3 top-2 text-gray-400">%</span>
-              </div>
-            </div>
-          </div>
-
-          {quote && (
-            <div className="mb-6 bg-gray-700/50 rounded-lg p-4">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400">Price</span>
-                <span className="font-medium">
-                  1 SOL = {quote ? formatPrice(quote) : '0.0000'} STORIES
-                </span>
-              </div>
-              <div className="flex justify-between mb-2">
-  <span className="text-gray-400">Price</span>
-  <span className="font-medium">
-    1 SOL = ${formatSolUsdPrice(pairData)} USD
-  </span>
-</div>
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-400">Minimum received</span>
-                <span className="font-medium">
-                  {(parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS * (1 - slippage / 100)).toFixed(4)} STORIES
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Price impact</span>
-                <span className={parseFloat(quote.priceImpactPct) > 1 ? 'text-red-400' : 'text-green-400'}>
-                  {quote.priceImpactPct}%
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-gray-400 text-right">
-    Last updated: {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : 'Never'}
-    {!isQuoteValid() && (
-      <span className="ml-2 text-yellow-400">(Quote expired)</span>
-    )}
+      {/* Content Area */}
+      <div className="p-6">
+        {activeTab === 'swap' ? (
+          <>
+            {/* Swap Form */}
+            <div className="space-y-6">
+              {/* Input Section */}
+            {/* Input Section */}
+<div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+  <div className="flex justify-between items-center mb-3">
+    <span className="text-[#AAAAAA]">You pay</span>
+    <div className="flex flex-col items-end">
+      <span className="text-sm text-[#AAAAAA]">
+        Balance: {solBalance !== null ? solBalance.toFixed(4) : '-'} SOL
+      </span>
+      <span className="text-xs text-[#777777]">
+        ≈ ${calculateSolToUsd(amount)} USD
+      </span>
+    </div>
   </div>
-            </div>
-          )}
-
-<div className="flex gap-3">
-  <button
-    onClick={() => {
-      fetchPairData();
-      getQuote();
-    }}
-    disabled={loading}
-    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg disabled:opacity-50"
-  >
-    Refresh Prices
-  </button>
-  <button
-  onClick={executeSwap} // Directly call executeSwap without balance check
-  disabled={loading || !quote || !isConnected || !isQuoteValid()}
-  className="flex-1 py-4 bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
->
-  {!isConnected ? 'Connect Wallet' : loading ? 'Processing...' : 'Swap'}
-</button>
+  <div className="flex items-center">
+    <input
+      type="number"
+      value={amount}
+      onChange={(e) => setAmount(e.target.value)}
+      className="flex-1 bg-transparent text-white text-2xl outline-none placeholder-[#555555]"
+      placeholder="0.0"
+      min="0"
+      step="0.1"
+    />
+    <div className="bg-[#333333] rounded-lg px-4 py-2">
+      <span className="font-medium text-white">SOL</span>
+    </div>
+  </div>
 </div>
-          {txStatus && (
-            <div className="mt-4 text-center text-blue-400">
-              {txStatus}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="p-6">
-          {pairData && (
-            <>
-              <div className="flex items-center justify-between mb-6">
+
+              {/* Output Section */}
+              <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[#AAAAAA]">You receive</span>
+                  <span className="text-sm text-[#AAAAAA]">
+                    Balance: {STORIESBalance !== null ? STORIESBalance.toLocaleString() : '-'} STORIES
+                  </span>
+                </div>
                 <div className="flex items-center">
-                  {pairData.baseToken.logoURI && (
-                    <img 
-                      src={pairData.baseToken.logoURI} 
-                      alt={pairData.baseToken.symbol}
-                      className="w-12 h-12 mr-3 rounded-full"
-                    />
-                  )}
-                  <div>
-                    <h2 className="text-xl font-bold">{pairData.baseToken.symbol}/{pairData.quoteToken.symbol}</h2>
-                    <p className="text-gray-400">${parseFloat(pairData.priceUsd).toFixed(6)}</p>
+                  <input
+                    type="text"
+                    value={quote ? (parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS).toFixed(4) : '0.0'}
+                    readOnly
+                    className="flex-1 bg-transparent text-white text-2xl outline-none"
+                  />
+                  <div className="bg-[#333333] rounded-lg px-4 py-2">
+                    <span className="font-medium text-white">STORIES</span>
                   </div>
-                </div>
-                <div className={`text-xl font-bold ${
-                  (pairData.priceChange.h24 || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                }`}>
-                  {(pairData.priceChange.h24 || 0).toFixed(2)}%
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Market Cap</p>
-                  <p className="text-lg font-medium">
-                    {pairData.marketCap ? formatLargeNumber(pairData.marketCap) : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">FDV</p>
-                  <p className="text-lg font-medium">
-                    {pairData.fdv ? formatLargeNumber(pairData.fdv) : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Liquidity</p>
-                  <p className="text-lg font-medium">
-                    {pairData.liquidity?.usd ? formatLargeNumber(pairData.liquidity.usd) : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Volume (24h)</p>
-                  <p className="text-lg font-medium">
-                    {pairData.volume?.h24 ? formatLargeNumber(pairData.volume.h24) : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Transactions (24h)</p>
-                  <p className="text-lg font-medium">
-                    {pairData.txns.h24 ? (pairData.txns.h24.buys + pairData.txns.h24.sells).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Buy/Sell Ratio</p>
-                  <p className="text-lg font-medium">
-                    {pairData.txns.h24 ? 
-                      (pairData.txns.h24.buys / (pairData.txns.h24.sells || 1)).toFixed(2) : 'N/A'}:1
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">Created</p>
-                  <p className="text-lg font-medium">
-                    {formatDate(pairData.pairCreatedAt)}
-                  </p>
-                </div>
-                <div className="bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-400 text-sm">DEX</p>
-                  <p className="text-lg font-medium capitalize">
-                    {pairData.dexId || 'N/A'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-3">Token Details</h3>
-                <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
+              {/* Price Info */}
+              {quote && (
+                <div className="bg-[#222222] rounded-xl p-4 border border-[#333333] space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Chain</span>
-                    <span className="font-medium capitalize">{pairData.chainId || 'N/A'}</span>
+                    <span className="text-[#AAAAAA]">Exchange Rate</span>
+                    <span className="font-medium text-white">
+                      1 SOL = {formatPrice(quote)} STORIES
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Base Token</span>
-                    <span className="font-medium">{pairData.baseToken.symbol} ({pairData.baseToken.name})</span>
+                    <span className="text-[#AAAAAA]">SOL Price</span>
+                    <span className="font-medium text-white">
+                      ${formatSolUsdPrice(pairData)} USD
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-400">Quote Token</span>
-                    <span className="font-medium">{pairData.quoteToken.symbol} ({pairData.quoteToken.name})</span>
+                    <span className="text-[#AAAAAA]">Minimum Received</span>
+                    <span className="font-medium text-white">
+                      {(parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS * (1 - slippage / 100)).toFixed(4)} STORIES
+                    </span>
                   </div>
-                  {pairData.labels && pairData.labels.length > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Labels</span>
-                      <div className="flex gap-2">
-                        {pairData.labels.map((label, index) => (
-                          <span key={index} className="bg-blue-600/30 text-blue-300 px-2 py-1 rounded text-xs">
-                            {label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {pairData.info && (
-                <div className="mb-6">
-                  <h3 className="text-lg font-bold mb-3">Links</h3>
-                  <div className="bg-gray-700/50 rounded-lg p-4">
-                    <div className="flex flex-wrap gap-3">
-                      {pairData.info.websites?.map((site, index) => (
-                        <a 
-                          key={index} 
-                          href={site.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 px-3 py-2 rounded text-sm"
-                        >
-                          Website
-                        </a>
-                      ))}
-                      {pairData.url && (
-                        <a 
-                          href={pairData.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="bg-green-600/30 hover:bg-green-600/50 text-green-300 px-3 py-2 rounded text-sm"
-                        >
-                          DexScreener
-                        </a>
-                      )}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#AAAAAA]">Price Impact</span>
+                    <span className={parseFloat(quote.priceImpactPct) > 1 ? 'text-red-400' : 'text-green-400'}>
+                      {quote.priceImpactPct}%
+                    </span>
                   </div>
                 </div>
               )}
 
-              <div className="mb-6">
-                <h3 className="text-lg font-bold mb-3">Contract Addresses</h3>
-                <div className="bg-gray-700/50 rounded-lg p-4 space-y-3">
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Pair Address</p>
-                    <code className="text-sm text-blue-400 break-all">{pairData.pairAddress}</code>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Base Token ({pairData.baseToken.symbol})</p>
-                    <code className="text-sm text-blue-400 break-all">{pairData.baseToken.address}</code>
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm mb-1">Quote Token ({pairData.quoteToken.symbol})</p>
-                    <code className="text-sm text-blue-400 break-all">{pairData.quoteToken.address}</code>
+              {/* Slippage Settings */}
+              <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[#AAAAAA]">Slippage Tolerance</span>
+                  <span className="text-sm text-[#00A3FF]">
+                    {slippage}%
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  {[0.5, 1, 2].map((value) => (
+                    <button
+                      key={value}
+                      onClick={() => setSlippage(value)}
+                      className={`flex-1 py-3 rounded-lg text-sm font-medium ${
+                        slippage === value 
+                          ? 'bg-[#00A3FF] text-white' 
+                          : 'bg-[#333333] text-[#AAAAAA] hover:bg-[#3A3A3A]'
+                      }`}
+                    >
+                      {value}%
+                    </button>
+                  ))}
+                  <div className="relative flex-1">
+                    <input
+                      type="number"
+                      value={slippage}
+                      onChange={(e) => setSlippage(Math.min(10, Math.max(0.1, parseFloat(e.target.value) || 0.5)))}
+                      className="w-full h-full py-3 px-4 bg-[#333333] rounded-lg text-right text-white outline-none"
+                      min="0.1"
+                      max="10"
+                      step="0.1"
+                    />
+                    <span className="absolute right-3 top-3 text-[#AAAAAA]">%</span>
                   </div>
                 </div>
               </div>
-            </>
-          )}
 
-          {tokenData && (
-            <div className="mt-6">
-              <h3 className="text-lg font-bold mb-3">Other Pairs</h3>
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <p className="text-gray-400 mb-2">Total Pairs: <span className="text-white">{tokenData.pairs.length}</span></p>
-                {tokenData.pairs.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-gray-400 border-b border-gray-700">
-                          <th className="text-left py-2">DEX</th>
-                          <th className="text-left py-2">Pair</th>
-                          <th className="text-right py-2">Price</th>
-                          <th className="text-right py-2">Liquidity</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {tokenData.pairs.slice(0, 5).map((pair, index) => (
-                          <tr key={index} className="border-b border-gray-700/50 hover:bg-gray-700/30">
-                            <td className="py-3 capitalize">{pair.dexId}</td>
-                            <td className="py-3">
-                              {pair.baseToken.symbol}/{pair.quoteToken.symbol}
-                            </td>
-                            <td className="py-3 text-right">
-                              ${parseFloat(pair.priceUsd).toFixed(6)}
-                            </td>
-                            <td className="py-3 text-right">
-                              {pair.liquidity?.usd ? formatLargeNumber(pair.liquidity.usd) : 'N/A'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    fetchPairData();
+                    getQuote();
+                  }}
+                  disabled={loading}
+                  className="flex-1 py-4 bg-[#333333] hover:bg-[#3A3A3A] text-white rounded-xl disabled:opacity-50 transition-colors"
+                >
+                  Refresh
+                </button>
+                <button
+                  onClick={executeSwap}
+                  disabled={loading || !quote || !isConnected || !isQuoteValid()}
+                  className="flex-1 py-4 bg-gradient-to-r from-[#00A3FF] to-[#00F0FF] hover:opacity-90 text-white text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {!isConnected ? 'Connect Wallet' : loading ? 'Processing...' : 'Swap Now'}
+                </button>
               </div>
             </div>
-          )}
+          </>
+        ) : (
+          /* Token Info Tab */
+          <div className="space-y-6">
+            {/* Market Data Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Market Cap', value: pairData?.marketCap },
+                { label: 'FDV', value: pairData?.fdv },
+                { label: 'Liquidity', value: pairData?.liquidity?.usd },
+                { label: 'Volume (24h)', value: pairData?.volume?.h24 },
+                { label: 'Transactions (24h)', value: pairData?.txns.h24 ? (pairData.txns.h24.buys + pairData.txns.h24.sells) : undefined },
+                { label: 'Created', value: pairData?.pairCreatedAt ? formatDate(pairData.pairCreatedAt) : undefined },
+              ].map((item, index) => (
+                <div key={index} className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+                  <p className="text-[#AAAAAA] text-sm mb-1">{item.label}</p>
+                  <p className="text-white font-medium">
+                    {item.value ? 
+                      (typeof item.value === 'number' ? formatLargeNumber(item.value) : item.value) 
+                      : 'N/A'}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-          <div className="mt-6">
+            {/* Token Details */}
+            <div className="bg-[#222222] rounded-xl p-6 border border-[#333333]">
+              <h3 className="text-xl font-bold text-white mb-4">Token Details</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between">
+                  <span className="text-[#AAAAAA]">Pair Address</span>
+                  <span className="text-[#00A3FF] font-mono text-sm break-all text-right">
+                    {pairData?.pairAddress || 'N/A'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#AAAAAA]">Base Token</span>
+                  <span className="text-white">
+                    {pairData?.baseToken.symbol} ({pairData?.baseToken.name})
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#AAAAAA]">Quote Token</span>
+                  <span className="text-white">
+                    {pairData?.quoteToken.symbol} ({pairData?.quoteToken.name})
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* View on DexScreener Button */}
             <a
               href={`https://dexscreener.com/solana/${PAIR_ADDRESS}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block w-full py-3 bg-blue-600 hover:bg-blue-700 text-center rounded-lg font-medium transition-colors"
+              className="block w-full py-4 bg-[#333333] hover:bg-[#3A3A3A] text-center rounded-xl font-medium transition-colors"
             >
               View on DexScreener
             </a>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

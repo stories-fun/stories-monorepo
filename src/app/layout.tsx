@@ -1,10 +1,13 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { WalletProviderWrapper } from "@/components/WalletProviderWrapper";
-import { AppKit } from '@/context/appkit';
+import { AppKit } from "@/context/appkit";
 import Navbar from "@/components/common/navbar";
+import Footer from "@/components/common/Footer";
 import { Toaster } from "sonner";
+import AppKitThemeCustomizer from "@/components/AppKitThemeCustomizer"; // 👈 import your theme customizer
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,20 +34,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-         <WalletProviderWrapper>
-            <AppKit>
-              
-              <Navbar />
-              <main className="flex-grow min-h-[calc(100vh-200px)]">
-                {/* Wrap children with ProtectedRoute */}
-                
-                  {children}
-                
-              </main>
-              <Toaster richColors />
-            
-            </AppKit>
-          </WalletProviderWrapper>
+        <WalletProviderWrapper>
+          <AppKit>
+            {/* 👇 Mount the theme customizer globally */}
+            <AppKitThemeCustomizer />
+
+            <Navbar />
+            <main className="flex-grow min-h-[calc(100vh-200px)]">
+              {children}
+            </main>
+            <Footer />
+            <Toaster richColors />
+          </AppKit>
+        </WalletProviderWrapper>
       </body>
     </html>
   );
