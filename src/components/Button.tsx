@@ -26,7 +26,7 @@ const CustomButton = ({
         inline-flex items-center gap-3 px-6 py-2 
         bg-green-500 hover:bg-green-600 active:bg-green-700
         text-white font-bold text-lg
-        rounded-full border-none cursor-pointer
+        rounded-full border border-black cursor-pointer
         transition-all duration-200 ease-in-out
         disabled:opacity-50 disabled:cursor-not-allowed
         focus:outline-none focus:ring-4 focus:ring-green-300

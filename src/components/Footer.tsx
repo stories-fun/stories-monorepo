@@ -21,7 +21,7 @@ export default function Footer() {
       </div>
 
       {/* Cloud Right */}
-      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px]">
+      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px] overflow-hidden">
         <Image
           src="/cloud_right.svg"
           alt="Cloud Right"
