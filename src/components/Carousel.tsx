@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring } from "framer-motion";
-import CustomButton from "./Button";
-import { cn } from "~/lib/utils";
-
-const START_INDEX = 1;
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import useEmblaCarousel from "embla-carousel-react";
+import Autoplay from "embla-carousel-autoplay";
 
 export interface CarouselItem {
   title: string;
@@ -15,126 +14,109 @@ export interface CarouselItem {
   id?: string | number;
 }
 
-interface CarouselProps {
+interface NewCarouselProps {
   items: CarouselItem[];
   className?: string;
-  startIndex?: number;
 }
 
-export default function Carousel({
+export default function NewCarousel({
   items,
   className = "",
-  startIndex = START_INDEX,
-}: CarouselProps) {
-  const containerRef = useRef<HTMLUListElement>(null);
-  const itemsRef = useRef<(HTMLLIElement | null)[]>([]);
-  const [activeSlide, setActiveSlide] = useState(startIndex);
-  const offsetX = useMotionValue(0);
-  const animatedX = useSpring(offsetX, {
-    damping: 20,
-    stiffness: 150,
-  });
-
-  function centerSlide(index: number) {
-    const container = containerRef.current;
-    const item = itemsRef.current[index];
-    if (!container || !item) return;
-
-    const containerWidth = container.offsetWidth;
-    const itemOffsetLeft = item.offsetLeft;
-    const itemWidth = item.offsetWidth;
-    const newOffset = containerWidth / 2 - (itemOffsetLeft + itemWidth / 2);
-
-    offsetX.set(newOffset);
-    setActiveSlide(index);
-  }
+}: NewCarouselProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
+    Autoplay({ delay: 4000, stopOnInteraction: false }),
+  ]);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    centerSlide(startIndex);
-  }, [startIndex]);
+    if (emblaApi) {
+      const onSelect = () => {
+        setActiveIndex(emblaApi.selectedScrollSnap());
+      };
+      emblaApi.on("select", onSelect);
+      onSelect(); // Set initial active index
+      return () => {
+        emblaApi.off("select", onSelect);
+      };
+    }
+  }, [emblaApi]);
 
   return (
-    <div className={cn("container mx-auto px-4 sm:px-6", className)}>
-      <div className="relative overflow-hidden">
-        <motion.ul
-          ref={containerRef}
-          className="flex items-start w-full"
-          style={{ x: animatedX }}
-        >
-          {items.map((item, index) => {
-            const active = index === activeSlide;
-            return (
-              <motion.li
-                layout
-                key={item.id || item.title}
-                ref={(el) => {
-                  itemsRef.current[index] = el;
-                }}
-                className={cn(
-                  "relative shrink-0 select-none px-2 sm:px-3 transition-opacity duration-300 w-full sm:w-auto",
-                  !active && "opacity-30"
-                )}
-                style={{
-                  flexBasis: active ? "60%" : "40%",
-                }}
+    <div
+      className={cn("relative w-full flex flex-col items-center", className)}
+    >
+      <div className="w-full flex justify-center mb-8 h-16">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={items[activeIndex]?.title}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="relative inline-block bg-white px-8 py-4 font-extrabold text-xl sm:text-2xl text-black"
+          >
+            {items[activeIndex]?.title}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="relative w-full max-w-6xl mx-auto">
+        <div className="overflow-hidden" ref={emblaRef}>
+          <div className="flex">
+            {items.map((item, index) => (
+              <div
+                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4"
+                key={item.id ? `item-${item.id}` : `item-${index}`}
               >
-                <Link
-                  href={item.url}
-                  className="block w-full"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  draggable={false}
+                <motion.div
+                  className="h-full"
+                  animate={{
+                    scale: activeIndex === index ? 1 : 0.85,
+                    opacity: activeIndex === index ? 1 : 0.5,
+                  }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  {/* Title centered over the image */}
-                  {active && (
-                    <div className="flex justify-center mb-2">
-                      <div className="relative inline-block bg-white px-10 py-4 font-extrabold text-2xl text-black">
-                        {item.title}
-                      </div>
-                    </div>
-                  )}
-
-                  <div
-                    className={cn(
-                      "relative w-full overflow-hidden bg-[#141414]",
-                      active ? "aspect-[5/3]" : "aspect-[4/3]"
-                    )}
+                  <Link
+                    href={item.url}
+                    className="block w-full h-full group"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    draggable={false}
                   >
-                    {/* Image background */}
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="absolute inset-0 h-full w-full object-cover"
-                      draggable={false}
-                    />
-
-                    {/* Button centered at the bottom of the image */}
-                    {active && (
-                      <div className="absolute bottom-[5px] left-1/2 z-20 -translate-x-1/2">
-                        <CustomButton text="Unlock story" />
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              </motion.li>
-            );
-          })}
-        </motion.ul>
-
-        {/* Stick-style dots — hidden on mobile */}
-        <div className="my-6 hidden sm:flex justify-center gap-2">
-          {items.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => centerSlide(index)}
-              className={cn(
-                "h-1 w-6 transition-colors duration-300",
-                index === activeSlide ? "bg-white" : "bg-white/30",
-                "cursor-pointer"
-              )}
-            />
-          ))}
+                    <div
+                      className={cn(
+                        "relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
+                      )}
+                      style={{ aspectRatio: "16/9" }}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                    </div>
+                  </Link>
+                </motion.div>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+      <div className="flex justify-center mt-8 space-x-3">
+        {items.map((_, index) => (
+          <button
+            key={`dot-${index}`}
+            onClick={() => emblaApi && emblaApi.scrollTo(index)}
+            className={cn(
+              "w-1 h-3 transition-all duration-300 rounded-full",
+              activeIndex === index
+                ? "bg-white scale-125"
+                : "bg-gray-300 hover:bg-gray-400"
+            )}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
       </div>
     </div>
   );

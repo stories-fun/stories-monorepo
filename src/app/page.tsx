@@ -11,7 +11,7 @@ const sampleCarouselItems = [
   {
     id: 2,
     image: "/lion.webp",
-    title: "Tiffany Story",
+    title: "x Story",
     url: "https://medium.com/@jeyprox/building-a-fully-customisable-input-component-with-nextjs-reacthookfrom-tailwindcss-and-ts-58874a2e3450",
   },
   {
@@ -69,6 +69,11 @@ export default function Home() {
           Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
           when an unknown printer took a galley of type
         </p>
+      </section>
+
+      {/* Carousel Section */}
+      <section className="mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4">
+        <Carousel items={sampleCarouselItems} />
       </section>
       
 
