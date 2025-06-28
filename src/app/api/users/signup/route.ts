@@ -74,18 +74,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Basic wallet address validation
-    const walletRegex = /^0x[a-fA-F0-9]{40}$/;
-    if (!walletRegex.test(wallet_address)) {
-      return NextResponse.json(
-        {
-          error: 'Invalid wallet address',
-          message: 'Please provide a valid wallet address (0x...)'
-        },
-        { status: 400 }
-      );
-    }
-
     // Clean the input data
     const cleanUsername = username.trim().toLowerCase();
     const cleanEmail = email.trim().toLowerCase();
