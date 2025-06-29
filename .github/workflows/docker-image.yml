@@ -41,3 +41,22 @@ jobs:
           build-args: |
             NEXT_PUBLIC_PROJECT_ID=${{ secrets.NEXT_PUBLIC_PROJECT_ID }}
             NEXT_PUBLIC_HELIUS_API_KEY=${{ secrets.NEXT_PUBLIC_HELIUS_API_KEY }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.7
+        with:         
+          host: ${{ secrets.REMOTE_SERVER_ADDRESS }}
+          username: ${{ secrets.REMOTE_SERVER_USERNAME }}
+          key:  ${{ secrets.REMOTE_SERVER_KEY }}
+          port: ${{ secrets.SSH_PORT }} 
+          script: |
+            docker stop stories-app 
+            docker rm stories-app 
+            docker image rm ghcr.io/abhishekk24/stories-monorepo:latest
+            docker pull ghcr.io/abhishekk24/stories-monorepo:latest
+            docker run -d --name stories-app -p 3002:3000 -e NEXT_PUBLIC_PROJECT_ID=93d9e09393715c560c91c5d16b30a7d9 -e NEXT_PUBLIC_HELIUS_API_KEY=79fb27ad-f384-4edd-8eb0-4524558c5392 ghcr.io/abhishekk24/stories-monorepo:latest
