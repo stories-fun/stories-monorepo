@@ -6,7 +6,7 @@ import {
   useAppKitNetworkCore,
   useAppKitProvider,
 } from '@reown/appkit/react';
-import { SolanaAdapter, BaseWalletAdapter } from '@reown/appkit-adapter-solana';
+import { SolanaAdapter, BaseWalletAdapter, Provider } from '@reown/appkit-adapter-solana';
 import { solana, solanaDevnet, solanaTestnet } from '@reown/appkit/networks';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import Cookies from 'js-cookie';
@@ -22,10 +22,10 @@ if (!projectId) {
 }
 
 const metadata = {
-  name: 'CyreneAI',
-  description: "Powering the future of AI interaction through multi-agent collaboration.",
-  url: 'https://cyreneai.com/',
-  icons: ['https://cyreneai.com/CyreneAI_logo-text.png'],
+  name: 'stories.fun',
+  description: "We help Individuals and Businesses tell stories and form meaningful connections. Let your authentic story become your Social Identity. Share your journey. Discover others. Social Media that Invests in truth.",
+  url: 'https://app.stories.fun/',
+  icons: ['https://framerusercontent.com/images/yoPm7BQ0pno3cZeknmif5tLEf0.png'],
 };
 
 const wallets: BaseWalletAdapter[] = [
@@ -62,15 +62,7 @@ const getAuthFromCookies = () => ({
   userId: Cookies.get(getChainCookieKey("erebrus_userid")),
 });
 
-declare global {
-  interface Window {
-    backpack?: any;
-    solflare?: any; // Add solflare property to the Window interface
-    phantom?: { solana?: any }; // Add phantom property to the Window interface
-  }
-}
-
-const authenticateSolana = async (walletAddress: string) => {
+const authenticateSolana = async (walletAddress: string, walletProvider: Provider) => {
   try {
     const { data } = await axios.get(`${GATEWAY_URL}api/v1.0/flowid`, {
       params: { walletAddress, chain: 'sol' },
@@ -78,16 +70,10 @@ const authenticateSolana = async (walletAddress: string) => {
 
     const { eula: message, flowId } = data.payload;
 
-    const wallet =
-      window.phantom?.solana ||
-      window.solflare ||
-      window.backpack ||
-      (window.solana?.isConnected ? window.solana : null);
-
-    if (!wallet) throw new Error('No Solana wallet detected');
-
     const encodedMessage = new TextEncoder().encode(message);
-    const { signature } = await wallet.signMessage(encodedMessage);
+    
+    // Use walletProvider.signMessage which works with both wallet and social logins
+    const signature = await walletProvider.signMessage(encodedMessage);
 
     const signatureHex = Array.from(new Uint8Array(signature))
       .map((b: number) => b.toString(16).padStart(2, '0'))
@@ -119,6 +105,7 @@ const authenticateSolana = async (walletAddress: string) => {
 export function useSolanaAuth() {
   const { isConnected, address } = useAppKitAccount();
   const { chainId, caipNetworkId } = useAppKitNetworkCore();
+  const { walletProvider } = useAppKitProvider<Provider>("solana");
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState(false);
@@ -149,7 +136,7 @@ export function useSolanaAuth() {
     }
 
     try {
-      const result = await authenticateSolana(address);
+      const result = await authenticateSolana(address, walletProvider);
       if (result) {
         setAuthSuccess(true);
         toast.success('Authentication successful');
