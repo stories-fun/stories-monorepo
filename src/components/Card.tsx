@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 import CustomButton from "./Button";
 import { Clock5 } from "lucide-react";
 
@@ -14,17 +13,18 @@ interface CustomCardProps {
   change?: number;
   author?: string;
   authorImage?: string;
+  onClick?: () => void;
 }
 
 export function CustomCard({
   image,
   title,
-  url,
   timeToRead,
   price,
   change,
   author,
   authorImage,
+  onClick,
 }: CustomCardProps) {
   const isPositive = change !== undefined && change >= 0;
   const changeColor = isPositive ? "text-green-500" : "text-red-500";
@@ -34,12 +34,7 @@ export function CustomCard({
     <div className="relative overflow-hidden border border-neutral-800 text-white max-w-[354px] shadow-lg">
       {/* Image with author overlay */}
       <div className="relative w-full h-64">
-        <Image
-          src={image}
-          alt={title}
-          fill
-          className="object-cover"
-        />
+        <Image src={image} alt={title} fill className="object-cover" />
         {author && authorImage && (
           <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 px-3 py-2 rounded-br-xl z-10">
             <Image
@@ -83,18 +78,15 @@ export function CustomCard({
           )}
         </div>
 
-        {url && (
-          <div className="border-t border-[#141414] pt-4">
-            <div className="px-4">
-              <Link href={url}>
-                <CustomButton
-                  text="Read snippet"
-                  className="w-full justify-center"
-                />
-              </Link>
-            </div>
+        <div className="border-t border-[#141414] pt-4">
+          <div className="px-4">
+            <CustomButton
+              text="Read snippet"
+              className="w-full justify-center"
+              onClick={onClick}
+            />
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
