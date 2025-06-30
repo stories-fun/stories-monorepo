@@ -31,7 +31,27 @@ export function CustomCard({
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="relative overflow-hidden border border-neutral-800 text-white max-w-[354px] shadow-lg">
+    <div className="relative overflow-hidden text-white max-w-[354px] shadow-lg">
+      {/* Folded corner */}
+      <div className="absolute top-0 right-0 w-16 h-16 z-10">
+         <div
+          className="absolute top-0 right-0 w-full h-full shadow-md"
+          style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
+        />
+        <div
+          className="absolute top-0 right-0 w-full h-full border-l border-b bg-[#141414] shadow-md"
+          style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
+        />
+        <div
+          className="absolute top-0 right-0 w-full h-full bg-[#FFF6C9] shadow-md"
+          style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
+        />
+        <div
+          className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-[#FFF6C9] shadow-md"
+          style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
+        />
+      </div>
+
       {/* Image with author overlay */}
       <div className="relative w-full h-64">
         <Image src={image} alt={title} fill className="object-cover" />
