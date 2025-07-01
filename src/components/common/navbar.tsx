@@ -77,7 +77,7 @@ const Navbar = () => {
 
 <div className="flex items-center gap-2 ">
           <ConnectButton />
-          {isConnected && <AuthButton />}
+          {isConnected && <AuthButton walletAddress = {walletAddress}/>}
         </div>
         </div>
 
