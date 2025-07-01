@@ -4,10 +4,21 @@ import Link from "next/link";
 import CustomButton from "./Button";
 import { Wallet } from "lucide-react";
 import { usePathname } from "next/navigation";
+import UserModal from "./UserModal";
+import { useState } from "react";
 
 const Navbar = () => {
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const pathname = usePathname();
   const isOurStoryPage = pathname === "/our-story";
+
+  const handleOpenUserModal = () => {
+    setIsUserModalOpen(true);
+  };
+
+  const handleCloseUserModal = () => {
+    setIsUserModalOpen(false);
+  };
 
   return (
     <nav className="bg-[#141414] px-4 py-4">
@@ -40,6 +51,13 @@ const Navbar = () => {
           icon={Wallet}
           onClick={() => console.log("Wallet clicked")}
           className="whitespace-nowrap flex-shrink-0"
+        />
+
+        {/* User Modal */}
+        <UserModal
+          isOpen={isUserModalOpen}
+          onClose={handleCloseUserModal}
+          onSave={(userData) => console.log("User data saved:", userData)}
         />
       </div>
     </nav>
