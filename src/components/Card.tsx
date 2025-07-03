@@ -31,9 +31,9 @@ export function CustomCard({
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="relative overflow-hidden text-white max-w-[354px] shadow-lg">
+    <div className="relative overflow-hidden text-white max-w-[350px] shadow-lg">
       {/* Folded corner */}
-      <div className="absolute top-0 right-0 w-16 h-16 z-10">
+      <div className="absolute top-[-1px] right-0 w-16 h-16 z-1">
          <div
           className="absolute top-0 right-0 w-full h-full shadow-md"
           style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}

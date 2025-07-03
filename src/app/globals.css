@@ -34,10 +34,19 @@ body {
   /* mask created with 
   https://css-generators.com/wavy-shapes/ */
 
-  background: #FFF6C9;
+  background: #000000;
   --mask:
     radial-gradient(61.77px at 50% calc(100% - 84px),#000 99%,#0000 101%) calc(50% - 60px) 0/120px 100%,
     radial-gradient(61.77px at 50% calc(100% + 54px),#0000 99%,#000 101%) 50% calc(100% - 30px)/120px 100% repeat-x;
+  -webkit-mask: var(--mask);
+          mask: var(--mask);
+}
+
+.wavyimage {
+  background: #FFF6C9;
+  --mask:
+    radial-gradient(9.77px at 50% 13.6px,#000 99%,#0000 101%) calc(50% - 16px) 0/32px 100%,
+    radial-gradient(9.77px at 50% -5.6px,#0000 99%,#000 101%) 50% 8px/32px 100% repeat-x;
   -webkit-mask: var(--mask);
           mask: var(--mask);
 }

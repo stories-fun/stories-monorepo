@@ -47,12 +47,41 @@ export default function Footer() {
       {/* Footer Content */}
       <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-8 mt-40 relative z-10">
         {/* Center logo */}
-        <div className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
+        <div className="hidden sm:block text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
           S.
         </div>
 
-        {/* First row */}
-        <div className={`flex justify-center gap-16 text-sm ${textStyle}`}>
+        {/* Mobile: All links in one row */}
+        <div
+          className={`flex sm:hidden flex-nowrap justify-center items-center w-full gap-4 text-sm ${textStyle}`}
+        >
+          <a href="#about" className="hover:underline">
+            About
+          </a>
+          <a href="#faqs" className="hover:underline">
+            FAQs
+          </a>
+          {/* logo */}
+          <div className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
+            S.
+          </div>
+          <a href="#stories" className="hover:underline">
+            Stories
+          </a>
+          <a
+            href="https://twitter.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            Twitter
+          </a>
+        </div>
+
+        {/* Desktop: First row – narrower */}
+        <div
+          className={`hidden sm:flex justify-between w-full max-w-sm gap-20 text-sm ${textStyle}`}
+        >
           <a href="#about" className="hover:underline">
             About
           </a>
@@ -61,9 +90,9 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Second row */}
+        {/* Desktop: Second row – wider */}
         <div
-          className={`flex justify-between w-full max-w-md text-sm px-6 ${textStyle}`}
+          className={`hidden sm:flex justify-between w-full max-w-[1400px] gap-40 text-sm ${textStyle}`}
         >
           <a href="#stories" className="hover:underline">
             Stories
