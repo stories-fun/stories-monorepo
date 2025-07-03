@@ -10,7 +10,7 @@ export default function Footer() {
   return (
     <footer className="w-full bg-[#141414] text-[#FFEEBA] pt-16 pb-10 relative overflow-hidden">
       {/* Cloud Left */}
-      <div className="absolute top-0 left-0 w-[120px] sm:w-[160px]">
+      <div className="absolute top-0 left-0 w-[120px] sm:w-[160px] mb-10">
         <Image
           src="/cloud_left.svg"
           alt="Cloud Left"
@@ -21,7 +21,7 @@ export default function Footer() {
       </div>
 
       {/* Cloud Right */}
-      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px] overflow-hidden">
+      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px] overflow-hidden mt-10">
         <Image
           src="/cloud_right.svg"
           alt="Cloud Right"
@@ -32,7 +32,7 @@ export default function Footer() {
       </div>
 
       {/* Heading Text */}
-      <h1 className="text-[40px] sm:text-[60px] md:text-[80px] font-extrabold text-center leading-[100%] tracking-tight px-4 whitespace-nowrap overflow-hidden text-[#FFEEBA] z-10">
+      <h1 className="text-[40px] sm:text-[60px] md:text-[140px] font-extrabold text-center leading-[100%] tracking-tight px-4 whitespace-nowrap overflow-hidden text-[#FFEEBA] z-10">
         Storytelling made fun
       </h1>
 
