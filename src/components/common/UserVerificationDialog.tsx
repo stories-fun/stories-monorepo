@@ -1,9 +1,18 @@
 // src/components/common/UserVerificationDialog.tsx
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { X, User, Mail, Wallet, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  User,
+  Mail,
+  Wallet,
+  Loader2,
+  Send,
+  CheckCircle2,
+  Shield,
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface UserVerificationDialogProps {
   isOpen: boolean;
@@ -19,113 +28,242 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
   onSuccess,
 }) => {
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
+    username: "",
+    email: "",
     wallet_address: walletAddress,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // OTP related state - FIXED: Changed to string and proper implementation
+  const [otp, setOtp] = useState("");
+  const [generatedOtp, setGeneratedOtp] = useState(""); // Store the generated OTP
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [canResendOtp, setCanResendOtp] = useState(true);
 
   React.useEffect(() => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      wallet_address: walletAddress
+      wallet_address: walletAddress,
     }));
   }, [walletAddress]);
 
+  // Countdown timer for OTP resend
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (otpCountdown > 0) {
+      timer = setTimeout(() => {
+        setOtpCountdown(otpCountdown - 1);
+      }, 1000);
+    } else if (otpCountdown === 0 && isOtpSent) {
+      setCanResendOtp(true);
+    }
+    return () => clearTimeout(timer);
+  }, [otpCountdown, isOtpSent]);
+
   const validateForm = () => {
-    const newErrors: {[key: string]: string} = {};
+    const newErrors: { [key: string]: string } = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = "Username is required";
     } else if (formData.username.trim().length < 3) {
-      newErrors.username = 'Username must be at least 3 characters';
+      newErrors.username = "Username must be at least 3 characters";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!isOtpVerified) {
+      newErrors.email_verification = "Please verify your email address";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  // FIXED: Generate random 6-digit OTP
+  const getRandomSixDigit = () => {
+    return Math.floor(Math.random() * (999999 - 100000 + 1)) + 100000;
+  };
+
+  // FIXED: Proper send email function
+  const sendEmail = async () => {
+    if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      toast.error('Please enter a valid email address first');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    
+    try {
+      // Generate new OTP
+      const newOtp = getRandomSixDigit();
+      setGeneratedOtp(newOtp.toString());
+
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: formData.email, 
+          otp: newOtp 
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setIsOtpSent(true);
+        setCanResendOtp(false);
+        setOtpCountdown(60); // 60 second countdown
+        toast.success('OTP sent to your email address');
+        console.log('OTP sent:', newOtp); // For debugging - remove in production
+      } else {
+        toast.error(result.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      console.error('Send OTP error:', error);
+      toast.error('Failed to send OTP. Please try again.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  // FIXED: Proper OTP verification function
+  const verifyOtp = async () => {
+    if (!otp.trim()) {
+      toast.error("Please enter the OTP");
+      return;
+    }
+
+    if (otp.length !== 6) {
+      toast.error("OTP must be 6 digits");
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+
+    try {
+      // Compare entered OTP with generated OTP
+      if (otp === generatedOtp) {
+        setIsOtpVerified(true);
+        toast.success('Email verified successfully!');
+        // Clear any email-related errors
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.email_verification;
+          return newErrors;
+        });
+      } else {
+        toast.error('Invalid OTP. Please try again.');
+      }
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      toast.error("Failed to verify OTP. Please try again.");
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
-      const response = await fetch('/api/users/signup', {
-        method: 'POST',
+      const response = await fetch("/api/users/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          email_verified: true, // Include verification status
+        }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        toast.success('Account created successfully!');
+        toast.success("Account created successfully!");
         onSuccess(result.data.user);
         onClose();
         // Reset form
-        setFormData({
-          username: '',
-          email: '',
-          wallet_address: walletAddress,
-        });
-        setErrors({});
+        resetForm();
       } else {
-        toast.error(result.message || 'Failed to create account');
-        
+        toast.error(result.message || "Failed to create account");
+
         // Handle specific field errors
         if (result.conflict_field) {
           setErrors({
-            [result.conflict_field]: `This ${result.conflict_field} is already taken`
+            [result.conflict_field]: `This ${result.conflict_field} is already taken`,
           });
         }
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('An unexpected error occurred');
+      console.error("Registration error:", error);
+      toast.error("An unexpected error occurred");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      username: "",
+      email: "",
+      wallet_address: walletAddress,
+    });
+    setOtp("");
+    setGeneratedOtp("");
+    setIsOtpSent(false);
+    setIsOtpVerified(false);
+    setOtpCountdown(0);
+    setCanResendOtp(true);
+    setErrors({});
+  };
+
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: ''
+        [field]: "",
       }));
+    }
+
+    // Reset OTP verification if email changes
+    if (field === "email" && isOtpSent) {
+      setIsOtpSent(false);
+      setIsOtpVerified(false);
+      setOtp("");
+      setGeneratedOtp("");
+      setOtpCountdown(0);
+      setCanResendOtp(true);
     }
   };
 
   const handleClose = () => {
     if (!isSubmitting) {
       onClose();
-      // Reset form on close
-      setFormData({
-        username: '',
-        email: '',
-        wallet_address: walletAddress,
-      });
-      setErrors({});
+      resetForm();
     }
   };
 
@@ -141,6 +279,7 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
             onClick={handleClose}
             className="text-[#8A8A8A] hover:text-white transition-colors"
             disabled={isSubmitting}
+            title="Close dialog"
           >
             <X size={24} />
           </button>
@@ -163,9 +302,11 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
                 <input
                   type="text"
                   value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("username", e.target.value)
+                  }
                   className={`w-full pl-10 pr-4 py-3 bg-[#222222] border rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF] ${
-                    errors.username ? 'border-red-500' : 'border-[#333333]'
+                    errors.username ? "border-red-500" : "border-[#333333]"
                   }`}
                   placeholder="Enter your username"
                   disabled={isSubmitting}
@@ -176,28 +317,108 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
               )}
             </div>
 
-            {/* Email Field */}
+            {/* Email Field with Send OTP Button */}
             <div>
               <label className="block text-sm font-medium text-[#AAAAAA] mb-2">
                 Email Address
               </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-[#666666]" />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 bg-[#222222] border rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF] ${
-                    errors.email ? 'border-red-500' : 'border-[#333333]'
-                  }`}
-                  placeholder="Enter your email"
-                  disabled={isSubmitting}
-                />
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-[#666666]" />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className={`w-full pl-10 pr-4 py-3 bg-[#222222] border rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF] ${
+                      errors.email ? "border-red-500" : "border-[#333333]"
+                    } ${isOtpVerified ? "border-green-500" : ""}`}
+                    placeholder="Enter your email"
+                    disabled={isSubmitting || isOtpVerified}
+                  />
+                  {isOtpVerified && (
+                    <CheckCircle2 className="absolute right-3 top-3 h-5 w-5 text-green-500" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={sendEmail}
+                  disabled={
+                    isSendingOtp ||
+                    !canResendOtp ||
+                    isOtpVerified ||
+                    !formData.email
+                  }
+                  className="px-4 py-3 bg-[#00A3FF] hover:bg-[#0088CC] disabled:bg-[#333333] disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 min-w-[120px] justify-center"
+                >
+                  {isSendingOtp ? (
+                    <Loader2 className="animate-spin h-4 w-4" />
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      {isOtpSent && !canResendOtp
+                        ? `${otpCountdown}s`
+                        : isOtpSent
+                        ? "Resend"
+                        : "Send OTP"}
+                    </>
+                  )}
+                </button>
               </div>
               {errors.email && (
                 <p className="text-red-400 text-sm mt-1">{errors.email}</p>
               )}
+              {isOtpVerified && (
+                <p className="text-green-400 text-sm mt-1 flex items-center gap-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Email verified successfully
+                </p>
+              )}
             </div>
+
+            {/* OTP Input Section */}
+            {isOtpSent && !isOtpVerified && (
+              <div>
+                <label className="block text-sm font-medium text-[#AAAAAA] mb-2">
+                  Email Verification Code
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Shield className="absolute left-3 top-3 h-5 w-5 text-[#666666]" />
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-10 pr-4 py-3 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF]"
+                      placeholder="Enter 6-digit OTP"
+                      maxLength={6}
+                      disabled={isSubmitting || isVerifyingOtp}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={verifyOtp}
+                    disabled={isVerifyingOtp || otp.length !== 6}
+                    className="px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-[#333333] disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2 min-w-[100px] justify-center"
+                  >
+                    {isVerifyingOtp ? (
+                      <Loader2 className="animate-spin h-4 w-4" />
+                    ) : (
+                      "Verify"
+                    )}
+                  </button>
+                </div>
+                <p className="text-[#666666] text-xs mt-1">
+                  Enter the 6-digit code sent to your email
+                </p>
+              </div>
+            )}
+
+            {/* Show verification requirement error */}
+            {errors.email_verification && (
+              <p className="text-red-400 text-sm">
+                {errors.email_verification}
+              </p>
+            )}
 
             {/* Wallet Address Field (Read Only) */}
             <div>
@@ -210,6 +431,7 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
                   type="text"
                   value={formData.wallet_address}
                   readOnly
+                  placeholder="Wallet address"
                   className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-[#333333] rounded-lg text-[#AAAAAA] cursor-not-allowed"
                 />
               </div>
@@ -232,7 +454,7 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isOtpVerified}
             className="flex-1 py-3 px-4 bg-gradient-to-r from-[#00A3FF] to-[#00F0FF] hover:opacity-90 text-white rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
@@ -241,7 +463,7 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
                 Creating...
               </>
             ) : (
-              'Verify Account'
+              "Verify Account"
             )}
           </button>
         </div>
