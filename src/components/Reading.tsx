@@ -1,3 +1,5 @@
+"use client";
+
 import { BookOpen, Calendar } from "lucide-react";
 
 interface ReadProps {

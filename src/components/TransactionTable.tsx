@@ -1,3 +1,5 @@
+"use client";
+
 import { MoveUpRight } from "lucide-react";
 
 interface TransactionProps {

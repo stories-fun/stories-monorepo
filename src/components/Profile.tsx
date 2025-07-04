@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 import { Pen, Copy, CopyCheck } from "lucide-react";
 
