@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     // Clean the input data
     const cleanUsername = username.trim().toLowerCase();
     const cleanEmail = email.trim().toLowerCase();
-    const cleanWalletAddress = wallet_address.trim().toLowerCase();
+    const cleanWalletAddress = wallet_address;
 
     // Check if user already exists
     const { data: existingUser, error: checkError } = await supabase

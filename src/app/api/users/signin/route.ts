@@ -48,19 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Clean and validate wallet address format
-    const cleanWalletAddress = wallet_address.trim().toLowerCase();
-    
-    // Basic wallet address validation
-    const walletRegex = /^0x[a-fA-F0-9]{40}$/;
-    if (!walletRegex.test(cleanWalletAddress)) {
-      return NextResponse.json(
-        {
-          error: 'Invalid wallet address format',
-          message: 'Wallet address must be in format 0x... (40 hex characters)'
-        },
-        { status: 400 }
-      );
-    }
+    const cleanWalletAddress = wallet_address;
 
     // Query user by wallet address
     const { data: user, error: queryError } = await supabase
