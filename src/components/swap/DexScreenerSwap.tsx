@@ -6,11 +6,9 @@ import { PublicKey, VersionedTransaction, Connection, Transaction } from '@solan
 import axios from 'axios';
 import { toast } from 'sonner';
 
-
 // STORIES token constants
 const STORIES_TOKEN_ADDRESS = new PublicKey('EvA88escD87zrzG7xo8WAM8jW6gJ5uQfeLL8Fj6DUZ2Q');
-
-const STORIES_DECIMALS = 6;
+const STORIES_DECIMALS = 9;
 const PAIR_ADDRESS = 'DwAnxaVPCkLCKigNt5kNZwUmJ3rbiVFmvLxgEgFyogAL';
 const SOL_TOKEN = 'So11111111111111111111111111111111111111112';
 const PRICE_REFRESH_INTERVAL = 10000; // 10 seconds
@@ -86,12 +84,8 @@ interface QuoteResponse {
   priceImpactPct: string;
   [key: string]: any;
 }
-const formatSolUsdPrice = (pairData: PairData | null) => {
-  if (!pairData || !pairData.priceNative || parseFloat(pairData.priceNative) === 0) return '0.00';
-  const STORIESPriceUsd = parseFloat(pairData.priceUsd);
-  const solToSTORIES = parseFloat(pairData.priceNative);
-  return (STORIESPriceUsd / solToSTORIES).toFixed(2);
-};
+
+
 const formatPrice = (quote: QuoteResponse) => {
   const solAmount = parseFloat(quote.inAmount) / 1e9;
   const STORIESAmount = parseFloat(quote.outAmount) / (10 ** STORIES_DECIMALS);
@@ -186,7 +180,9 @@ export const DexScreenerSwap = () => {
   const [pairData, setPairData] = useState<PairData | null>(null);
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
-  const [amount, setAmount] = useState<string>('1');
+  const [solAmount, setSolAmount] = useState<string>('1');
+  const [usdAmount, setUsdAmount] = useState<string>('');
+  const [inputMode, setInputMode] = useState<'SOL' | 'USD'>('SOL');
   const [slippage, setSlippage] = useState<number>(0.5);
   const [loading, setLoading] = useState<boolean>(false);
   const [txStatus, setTxStatus] = useState<string>('');
@@ -194,72 +190,102 @@ export const DexScreenerSwap = () => {
   const [STORIESBalance, setSTORIESBalance] = useState<number | null>(null);
   const [solBalance, setSolBalance] = useState<number | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
-const [quoteExpiry, setQuoteExpiry] = useState<number | null>(null);
+  const [quoteExpiry, setQuoteExpiry] = useState<number | null>(null);
+  const [solPrice, setSolPrice] = useState<number>(0);
 
-const calculateSolToUsd = (solAmount: string) => {
-  if (!pairData || !solAmount) return '0.00';
-  const solPriceUsd = parseFloat(formatSolUsdPrice(pairData));
-  const amount = parseFloat(solAmount) || 0;
-  return (amount * solPriceUsd).toFixed(2);
-};
+  const calculateSolToUsd = (solAmount: string) => {
+    if (!solAmount) return '0.00';
+    const amount = parseFloat(solAmount) || 0;
+    return (amount * solPrice).toFixed(2);
+  };
 
-const fetchPairData = async () => {
-  try {
-    const [pairResponse, tokenResponse] = await Promise.all([
-      axios.get(`https://api.dexscreener.com/latest/dex/pairs/solana/${PAIR_ADDRESS}`),
-      axios.get(`https://api.dexscreener.com/latest/dex/tokens/${STORIES_TOKEN_ADDRESS.toString()}`)
-    ]);
-    
-    const pair = pairResponse.data.pairs?.[0] || null;
-    setPairData(pair);
-    
-    setTokenData({
-      pairs: tokenResponse.data.pairs || []
-    });
-    
-    setLastUpdated(Date.now());
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    toast.error('Failed to fetch market data');
-  } finally {
-    setLoading(false);
-  }
-};
-const getQuote = async () => {
-  try {
-    if (!amount || parseFloat(amount) <= 0) return;
-    
-    setLoading(true);
-    const response = await axios.get(
-      `https://quote-api.jup.ag/v6/quote?inputMint=${SOL_TOKEN}&outputMint=${STORIES_TOKEN_ADDRESS.toString()}&amount=${parseFloat(amount) * 10 ** 9}&slippageBps=${slippage * 100}`
-    );
-    
-    const quoteData = response.data;
-    if (quoteData.priceImpactPct) {
-      quoteData.priceImpactPct = parseFloat(quoteData.priceImpactPct).toFixed(2);
+  const calculateUsdToSol = (usdAmount: string) => {
+    if (!usdAmount || solPrice === 0) return '0';
+    const amount = parseFloat(usdAmount) || 0;
+    if (amount <= 0) return '0';
+    return (amount / solPrice).toFixed(9); // More precision for small amounts
+  };
+
+  const fetchPairData = async () => {
+    try {
+      const [pairResponse, tokenResponse] = await Promise.all([
+        axios.get(`https://api.dexscreener.com/latest/dex/pairs/solana/${PAIR_ADDRESS}`),
+        axios.get(`https://api.dexscreener.com/latest/dex/tokens/${STORIES_TOKEN_ADDRESS.toString()}`)
+      ]);
+      
+      const pair = pairResponse.data.pairs?.[0] || null;
+      setPairData(pair);
+      
+      if (pair?.priceUsd && pair?.priceNative) {
+        const calculatedSolPrice = parseFloat(pair.priceUsd) / parseFloat(pair.priceNative);
+        setSolPrice(calculatedSolPrice);
+      }
+      
+      setTokenData({
+        pairs: tokenResponse.data.pairs || []
+      });
+      
+      setLastUpdated(Date.now());
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to fetch market data');
+    } finally {
+      setLoading(false);
     }
-    
-    setQuote(quoteData);
-    setQuoteExpiry(Date.now() + QUOTE_EXPIRY_TIME);
-  } catch (error) {
-    console.error('Error getting quote:', error);
-    toast.error('Failed to get swap quote');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const isQuoteValid = () => {
-  if (!quote || !quoteExpiry) return false;
-  return Date.now() < quoteExpiry;
-};
+  const getQuote = async () => {
+    try {
+      let amountToUse = '';
+      if (inputMode === 'SOL') {
+        amountToUse = solAmount;
+      } else {
+        const solValue = calculateUsdToSol(usdAmount);
+        amountToUse = solValue === '0.00' ? '0' : solValue; // Handle conversion
+      }
+  
+      // Validate the amount
+      const amountInLamports = parseFloat(amountToUse) * 10 ** 9;
+      if (isNaN(amountInLamports) || amountInLamports <= 0) {
+        toast.error('Please enter a valid amount');
+        return;
+      }
+  
+      setLoading(true);
+      const response = await axios.get(
+        `https://quote-api.jup.ag/v6/quote?inputMint=${SOL_TOKEN}&outputMint=${STORIES_TOKEN_ADDRESS.toString()}&amount=${Math.floor(amountInLamports)}&slippageBps=${Math.floor(slippage * 100)}`
+      );
+      
+      const quoteData = response.data;
+      if (quoteData.priceImpactPct) {
+        quoteData.priceImpactPct = parseFloat(quoteData.priceImpactPct).toFixed(2);
+      }
+      
+      setQuote(quoteData);
+      setQuoteExpiry(Date.now() + QUOTE_EXPIRY_TIME);
+    } catch (error) {
+      console.error('Error getting quote:', error);
+      if (axios.isAxiosError(error)) {
+        toast.error(`Failed to get swap quote: ${error.response?.data?.message || error.message}`);
+      } else {
+        toast.error(`Failed to get swap quote: ${String(error)}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const executeSwap = async () => {
-  if (!isQuoteValid()) {
-    toast.error('Price quote expired. Please refresh the quote.');
-    await getQuote();
-    return;
-  }
+  const isQuoteValid = () => {
+    if (!quote || !quoteExpiry) return false;
+    return Date.now() < quoteExpiry;
+  };
+
+  const executeSwap = async () => {
+    if (!isQuoteValid()) {
+      toast.error('Price quote expired. Please refresh the quote.');
+      await getQuote();
+      return;
+    }
     try {
       setTxStatus('Preparing transaction...');
       setLoading(true);
@@ -319,14 +345,14 @@ const executeSwap = async () => {
     const interval = setInterval(() => {
       if (activeTab === 'swap') {
         fetchPairData();
-        if (amount && isConnected) {
+        if ((inputMode === 'SOL' && solAmount) || (inputMode === 'USD' && usdAmount)) {
           getQuote();
         }
       }
     }, PRICE_REFRESH_INTERVAL);
   
     return () => clearInterval(interval);
-  }, [activeTab, amount, isConnected]);
+  }, [activeTab, solAmount, usdAmount, inputMode, isConnected]);
 
   useEffect(() => {
     fetchPairData();
@@ -341,13 +367,29 @@ const executeSwap = async () => {
   }, [address]);
 
   useEffect(() => {
-    if (amount && isConnected) {
+    if ((inputMode === 'SOL' && solAmount) || (inputMode === 'USD' && usdAmount)) {
       const debounceTimer = setTimeout(() => {
         getQuote();
       }, 500);
       return () => clearTimeout(debounceTimer);
     }
-  }, [amount, slippage, isConnected]);
+  }, [solAmount, usdAmount, inputMode, slippage, isConnected]);
+
+  const handleSolAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSolAmount(value);
+    if (solPrice > 0) {
+      setUsdAmount(calculateSolToUsd(value));
+    }
+  };
+
+  const handleUsdAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUsdAmount(value);
+    if (solPrice > 0) {
+      setSolAmount(calculateUsdToSol(value));
+    }
+  };
 
   if (loading && !pairData) {
     return (
@@ -410,35 +452,67 @@ const executeSwap = async () => {
           <>
             {/* Swap Form */}
             <div className="space-y-6">
+              {/* Input Mode Toggle */}
+              <div className="flex bg-[#222222] rounded-lg p-1 border border-[#333333]">
+                <button
+                  onClick={() => setInputMode('SOL')}
+                  className={`flex-1 py-2 rounded-md ${
+                    inputMode === 'SOL' 
+                      ? 'bg-[#00A3FF] text-white' 
+                      : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
+                  }`}
+                >
+                  SOL
+                </button>
+                <button
+                  onClick={() => setInputMode('USD')}
+                  className={`flex-1 py-2 rounded-md ${
+                    inputMode === 'USD' 
+                      ? 'bg-[#00A3FF] text-white' 
+                      : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
+                  }`}
+                >
+                  USD
+                </button>
+              </div>
+
               {/* Input Section */}
-            {/* Input Section */}
-<div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
-  <div className="flex justify-between items-center mb-3">
-    <span className="text-[#AAAAAA]">You pay</span>
-    <div className="flex flex-col items-end">
-      <span className="text-sm text-[#AAAAAA]">
-        Balance: {solBalance !== null ? solBalance.toFixed(4) : '-'} SOL
-      </span>
-      <span className="text-xs text-[#777777]">
-        ≈ ${calculateSolToUsd(amount)} USD
-      </span>
-    </div>
-  </div>
-  <div className="flex items-center">
-    <input
-      type="number"
-      value={amount}
-      onChange={(e) => setAmount(e.target.value)}
-      className="flex-1 bg-transparent text-white text-2xl outline-none placeholder-[#555555]"
-      placeholder="0.0"
-      min="0"
-      step="0.1"
-    />
-    <div className="bg-[#333333] rounded-lg px-4 py-2">
-      <span className="font-medium text-white">SOL</span>
-    </div>
-  </div>
-</div>
+              <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-[#AAAAAA]">You pay</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm text-[#AAAAAA]">
+                      Balance: {solBalance !== null ? solBalance.toFixed(4) : '-'} SOL
+                    </span>
+                    {inputMode === 'SOL' && (
+                      <span className="text-xs text-[#777777]">
+                        ≈ ${calculateSolToUsd(solAmount)} USD
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    value={inputMode === 'SOL' ? solAmount : usdAmount}
+                    onChange={inputMode === 'SOL' ? handleSolAmountChange : handleUsdAmountChange}
+                    className="flex-1 bg-transparent text-white text-2xl outline-none placeholder-[#555555]"
+                    placeholder="0.0"
+                    min="0"
+                    step={inputMode === 'SOL' ? "0.1" : "0.01"}
+                  />
+                  <div className="bg-[#333333] rounded-lg px-4 py-2">
+                    <span className="font-medium text-white">
+                      {inputMode === 'SOL' ? 'SOL' : 'USD'}
+                    </span>
+                  </div>
+                </div>
+                {inputMode === 'USD' && (
+                  <div className="mt-2 text-xs text-[#777777]">
+                    ≈ {solAmount} SOL
+                  </div>
+                )}
+              </div>
 
               {/* Output Section */}
               <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
@@ -459,6 +533,11 @@ const executeSwap = async () => {
                     <span className="font-medium text-white">STORIES</span>
                   </div>
                 </div>
+                {quote && (
+                  <div className="mt-2 text-xs text-[#777777]">
+                    ≈ ${(parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS * parseFloat(pairData?.priceUsd || '0')).toFixed(2)} USD
+                  </div>
+                )}
               </div>
 
               {/* Price Info */}
@@ -473,7 +552,7 @@ const executeSwap = async () => {
                   <div className="flex justify-between">
                     <span className="text-[#AAAAAA]">SOL Price</span>
                     <span className="font-medium text-white">
-                      ${formatSolUsdPrice(pairData)} USD
+                      ${solPrice.toFixed(2)} USD
                     </span>
                   </div>
                   <div className="flex justify-between">

@@ -88,6 +88,7 @@ const authenticateSolana = async (walletAddress: string, walletProvider: Provide
         walletAddress,
         message,
         chainName: 'sol',
+        origin : 'storiesfun'
       },
       { headers: { 'Content-Type': 'application/json' } }
     );
