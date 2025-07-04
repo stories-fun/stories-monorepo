@@ -9,7 +9,7 @@ import {
 import { SolanaAdapter, BaseWalletAdapter, Provider } from '@reown/appkit-adapter-solana';
 import { solana, solanaDevnet, solanaTestnet } from '@reown/appkit/networks';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
-import Cookies from 'js-cookie';
+// import Cookies from 'js-cookie';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
@@ -35,32 +35,32 @@ const wallets: BaseWalletAdapter[] = [
 
 const solanaAdapter = new SolanaAdapter({ wallets });
 
-const COOKIE_OPTIONS = {
-  expires: 7,
-  path: '/',
-  sameSite: 'Strict' as const,
-  secure: process.env.NODE_ENV === 'production',
-};
+// const COOKIE_OPTIONS = {
+//   expires: 7,
+//   path: '/',
+//   sameSite: 'Strict' as const,
+//   secure: process.env.NODE_ENV === 'production',
+// };
 
-const getChainCookieKey = (key: string) => `${key}_solana`;
+// const getChainCookieKey = (key: string) => `${key}_solana`;
 
-const setAuthCookies = (token: string, walletAddress: string, userId: string) => {
-  Cookies.set(getChainCookieKey("erebrus_token"), token, COOKIE_OPTIONS);
-  Cookies.set(getChainCookieKey("erebrus_wallet"), walletAddress.toLowerCase(), COOKIE_OPTIONS);
-  Cookies.set(getChainCookieKey("erebrus_userid"), userId, COOKIE_OPTIONS);
-};
+// const setAuthCookies = (token: string, walletAddress: string, userId: string) => {
+//   Cookies.set(getChainCookieKey("erebrus_token"), token, COOKIE_OPTIONS);
+//   Cookies.set(getChainCookieKey("erebrus_wallet"), walletAddress.toLowerCase(), COOKIE_OPTIONS);
+//   Cookies.set(getChainCookieKey("erebrus_userid"), userId, COOKIE_OPTIONS);
+// };
 
-const clearAuthCookies = () => {
-  Cookies.remove(getChainCookieKey("erebrus_token"));
-  Cookies.remove(getChainCookieKey("erebrus_wallet"));
-  Cookies.remove(getChainCookieKey("erebrus_userid"));
-};
+// const clearAuthCookies = () => {
+//   Cookies.remove(getChainCookieKey("erebrus_token"));
+//   Cookies.remove(getChainCookieKey("erebrus_wallet"));
+//   Cookies.remove(getChainCookieKey("erebrus_userid"));
+// };
 
-const getAuthFromCookies = () => ({
-  token: Cookies.get(getChainCookieKey("erebrus_token")),
-  wallet: Cookies.get(getChainCookieKey("erebrus_wallet")),
-  userId: Cookies.get(getChainCookieKey("erebrus_userid")),
-});
+// const getAuthFromCookies = () => ({
+//   token: Cookies.get(getChainCookieKey("erebrus_token")),
+//   wallet: Cookies.get(getChainCookieKey("erebrus_wallet")),
+//   userId: Cookies.get(getChainCookieKey("erebrus_userid")),
+// });
 
 const authenticateSolana = async (walletAddress: string, walletProvider: Provider) => {
   try {
@@ -93,11 +93,11 @@ const authenticateSolana = async (walletAddress: string, walletProvider: Provide
     );
 
     const { token, userId } = authResponse.data.payload;
-    setAuthCookies(token, walletAddress, userId);
+    // setAuthCookies(token, walletAddress, userId);
     return true;
   } catch (err) {
     console.error('Solana Auth error:', err);
-    clearAuthCookies();
+    // clearAuthCookies();
     return false;
   }
 };
@@ -111,8 +111,9 @@ export function useSolanaAuth() {
   const [authSuccess, setAuthSuccess] = useState(false);
 
   const isAuthenticated = () => {
-    const { token, wallet } = getAuthFromCookies();
-    return !!(token && wallet?.toLowerCase() === address?.toLowerCase());
+    // const { token, wallet } = getAuthFromCookies();
+    // return !!(token && wallet?.toLowerCase() === address?.toLowerCase());
+    return false; // Since cookies are disabled, always return false for now
   };
 
   const authenticate = async () => {
@@ -125,15 +126,15 @@ export function useSolanaAuth() {
     setAuthError(null);
     setAuthSuccess(false);
 
-    const { token, wallet } = getAuthFromCookies();
-    if (token && wallet?.toLowerCase() === address.toLowerCase()) {
-      setAuthSuccess(true);
-      return true;
-    }
+    // const { token, wallet } = getAuthFromCookies();
+    // if (token && wallet?.toLowerCase() === address.toLowerCase()) {
+    //   setAuthSuccess(true);
+    //   return true;
+    // }
 
-    if (wallet && wallet.toLowerCase() !== address.toLowerCase()) {
-      clearAuthCookies();
-    }
+    // if (wallet && wallet.toLowerCase() !== address.toLowerCase()) {
+    //   clearAuthCookies();
+    // }
 
     try {
       const result = await authenticateSolana(address, walletProvider);
@@ -156,7 +157,7 @@ export function useSolanaAuth() {
 
   useEffect(() => {
     if (!isConnected) {
-      clearAuthCookies();
+      // clearAuthCookies();
       setAuthSuccess(false);
     }
   }, [isConnected]);
