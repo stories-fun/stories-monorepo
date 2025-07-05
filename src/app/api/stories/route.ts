@@ -1,15 +1,9 @@
 // src/app/api/stories/route.ts
-// Build-safe POST API for creating stories
+// API for fetching stories with filtering and pagination
 
 import { NextRequest, NextResponse } from 'next/server';
 
-interface StoryRequestBody {
-  title: string;
-  content: string;
-  price_tokens: number;
-}
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     // Get environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -23,196 +17,199 @@ export async function POST(request: NextRequest) {
           message: 'Supabase environment variables are not configured',
           debug: {
             hasUrl: !!supabaseUrl,
-            hasKey: !!supabaseAnonKey
+            hasKey: !!supabaseAnonKey,
+            url: supabaseUrl || 'undefined',
+            key: supabaseAnonKey ? 'exists' : 'undefined'
           }
         },
         { status: 500 }
       );
     }
 
-    // Create Supabase client inside the function using dynamic import
+    // Create Supabase client inside the function
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Extract data from request body
-    const body: StoryRequestBody = await request.json();
-    const { title, content, price_tokens } = body;
+    const { searchParams } = new URL(request.url);
+    
+    // Get query parameters
+    const status = searchParams.get('status') || 'published'; // Default to published stories
+    const authorId = searchParams.get('author_id');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const offset = parseInt(searchParams.get('offset') || '0');
+    const sortBy = searchParams.get('sort_by') || 'created_at';
+    const sortOrder = searchParams.get('sort_order') || 'desc';
 
-    // Validate required fields
-    if (!title || !content || price_tokens === undefined) {
+    // Validate parameters
+    if (limit > 100) {
       return NextResponse.json(
         {
-          error: 'Missing required fields',
-          message: 'title, content, and price_tokens are required',
-          required_fields: ['title', 'content', 'price_tokens']
+          error: 'Invalid limit',
+          message: 'Limit cannot exceed 100 stories per request'
         },
         { status: 400 }
       );
     }
 
-    // Validate data types and constraints
-    if (typeof title !== 'string' || title.trim().length === 0) {
+    if (offset < 0) {
       return NextResponse.json(
         {
-          error: 'Invalid title',
-          message: 'Title must be a non-empty string'
+          error: 'Invalid offset',
+          message: 'Offset must be a non-negative number'
         },
         { status: 400 }
       );
     }
 
-    if (typeof content !== 'string' || content.trim().length === 0) {
+    const validSortFields = ['created_at', 'title', 'price_tokens'];
+    if (!validSortFields.includes(sortBy)) {
       return NextResponse.json(
         {
-          error: 'Invalid content',
-          message: 'Content must be a non-empty string'
+          error: 'Invalid sort field',
+          message: `Sort field must be one of: ${validSortFields.join(', ')}`
         },
         { status: 400 }
       );
     }
 
-    if (typeof price_tokens !== 'number' || price_tokens < 0) {
+    const validSortOrders = ['asc', 'desc'];
+    if (!validSortOrders.includes(sortOrder)) {
       return NextResponse.json(
         {
-          error: 'Invalid price_tokens',
-          message: 'price_tokens must be a non-negative number'
+          error: 'Invalid sort order',
+          message: 'Sort order must be either "asc" or "desc"'
         },
         { status: 400 }
       );
     }
 
-    // For now, we'll use a mock author_id since we don't have authentication
-    // In production, you would get this from authentication middleware
-    const author_id = 1; // Mock author ID
-
-    // Verify user exists (optional check)
-    const { data: user, error: userError } = await supabase
-      .from('user')
-      .select('id')
-      .eq('id', author_id)
-      .single();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        {
-          error: 'User not found',
-          message: 'The author user does not exist. Please create a user first.',
-          note: 'In production, this would come from authentication'
-        },
-        { status: 404 }
-      );
-    }
-
-    // Create the story
-    const { data: story, error: storyError } = await supabase
+    // Build the query
+    let query = supabase
       .from('stories')
-      .insert({
-        author_id,
-        title: title.trim(),
-        content: content.trim(),
+      .select(`
+        id,
+        title,
+        content,
         price_tokens,
-        status: 'pending' // Default status for new submissions
-      })
-      .select()
-      .single();
+        status,
+        created_at,
+        user:author_id (
+          id,
+          username,
+          wallet_address
+        )
+      `);
 
-    if (storyError) {
-      console.error('Database error creating story:', storyError);
+    // Apply filters
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    if (authorId) {
+      const authorIdNum = parseInt(authorId);
+      if (isNaN(authorIdNum)) {
+        return NextResponse.json(
+          {
+            error: 'Invalid author_id',
+            message: 'Author ID must be a valid number'
+          },
+          { status: 400 }
+        );
+      }
+      query = query.eq('author_id', authorIdNum);
+    }
+
+    // Apply sorting and pagination
+    query = query
+      .order(sortBy, { ascending: sortOrder === 'asc' })
+      .range(offset, offset + limit - 1);
+
+    const { data: stories, error: fetchError, count } = await query;
+
+    if (fetchError) {
+      console.error('Database error fetching stories:', fetchError);
       return NextResponse.json(
         {
           error: 'Database error',
-          message: 'Failed to create story',
-          details: storyError.message
+          message: 'Failed to fetch stories'
         },
         { status: 500 }
       );
     }
 
-    // Create corresponding story submission entry
-    const { data: submission, error: submissionError } = await supabase
-      .from('story_submissions')
-      .insert({
-        user_id: author_id,
-        story_id: story.id,
-        status: 'pending'
-      })
-      .select()
-      .single();
+    // Get total count for pagination info
+    const { count: totalCount, error: countError } = await supabase
+      .from('stories')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', status);
 
-    if (submissionError) {
-      console.error('Database error creating submission:', submissionError);
-      // Note: In a production app, you might want to rollback the story creation
-      // or handle this as a background process
+    if (countError) {
+      console.error('Database error getting count:', countError);
     }
 
-    // Return success response
+    // Transform the data to include author information properly
+    const transformedStories = stories?.map(story => ({
+      id: story.id,
+      title: story.title,
+      content: story.content,
+      price_tokens: story.price_tokens,
+      status: story.status,
+      created_at: story.created_at,
+      author: Array.isArray(story.user) ? story.user[0] : story.user
+    })) || [];
+
     return NextResponse.json(
       {
         success: true,
-        message: 'Story created successfully',
         data: {
-          story: {
-            id: story.id,
-            title: story.title,
-            content: story.content,
-            price_tokens: story.price_tokens,
-            status: story.status,
-            created_at: story.created_at,
-            author_id: story.author_id
+          stories: transformedStories,
+          pagination: {
+            total: totalCount || 0,
+            limit,
+            offset,
+            has_more: (totalCount || 0) > offset + limit
           },
-          submission: submission ? {
-            submission_id: submission.submission_id,
-            status: submission.status,
-            submitted_at: submission.submitted_at
-          } : null
+          filters: {
+            status,
+            author_id: authorId,
+            sort_by: sortBy,
+            sort_order: sortOrder
+          }
         }
       },
-      { status: 201 }
+      { status: 200 }
     );
 
   } catch (error) {
-    console.error('Unexpected error in createStory:', error);
-    
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        {
-          error: 'Invalid JSON',
-          message: 'Request body must be valid JSON'
-        },
-        { status: 400 }
-      );
-    }
-
+    console.error('Unexpected error in stories fetch:', error);
     return NextResponse.json(
       {
         error: 'Internal server error',
-        message: 'An unexpected error occurred'
+        message: 'An unexpected error occurred while fetching stories'
       },
       { status: 500 }
     );
   }
 }
 
-// Handle other HTTP methods
-export async function GET() {
+export async function POST() {
   return NextResponse.json(
     { 
-      message: 'Stories API is working!',
-      note: 'Use POST to create a new story'
-    }
-  );
-}
-
-export async function PUT() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use POST to create a new story' },
-    { status: 405 }
-  );
-}
-
-export async function DELETE() {
-  return NextResponse.json(
-    { error: 'Method not allowed', message: 'Use POST to create a new story' },
+      error: 'Method not allowed', 
+      message: 'Use GET to fetch stories. To create stories, use POST /api/stories/create',
+      available_endpoints: {
+        'GET /api/stories': 'Fetch stories with optional filters',
+        'POST /api/stories/create': 'Create a new story'
+      },
+      query_parameters: {
+        'status': 'Filter by story status (submitted, approved, published)',
+        'author_id': 'Filter by author ID',
+        'limit': 'Number of stories to return (max 100, default 10)',
+        'offset': 'Number of stories to skip (default 0)',
+        'sort_by': 'Field to sort by (created_at, title, price_tokens)',
+        'sort_order': 'Sort order (asc, desc)'
+      }
+    },
     { status: 405 }
   );
 }

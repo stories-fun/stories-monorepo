@@ -1,3 +1,4 @@
+// src/components/common/navbar.tsx
 "use client";
 
 import Link from "next/link";
@@ -29,6 +30,7 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: 'S.', protected: false, isLogo: true },
     { path: '/our-story', label: 'Our Story', protected: false },
+    { path: '/stories', label: 'Stories', protected: false }, // New stories page
     { path: '/swap', label: 'Trade', protected: false },
   ];
 
@@ -75,12 +77,11 @@ const Navbar = () => {
             )
           ))}
 
-<div className="flex items-center gap-2 ">
-          <ConnectButton />
-          {isConnected && <AuthButton/>}
+          <div className="flex items-center gap-2 ">
+            <ConnectButton />
+            {isConnected && <AuthButton/>}
+          </div>
         </div>
-        </div>
-
       </div>
     </nav>
   );
