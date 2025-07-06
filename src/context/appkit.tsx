@@ -110,11 +110,25 @@ export function useSolanaAuth() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState(false);
+  const [hasSignedMessage, setHasSignedMessage] = useState(false);
 
+  // Enhanced authentication check
   const isAuthenticated = () => {
-    // const { token, wallet } = getAuthFromCookies();
-    // return !!(token && wallet?.toLowerCase() === address?.toLowerCase());
-    return false; // Since cookies are disabled, always return false for now
+    // Since cookies are disabled, we'll use a combination of:
+    // 1. Wallet connection status
+    // 2. Whether user has successfully signed a message (authSuccess)
+    // 3. In-memory state
+    
+    if (!isConnected || !address) {
+      return false;
+    }
+    
+    // For basic authentication, wallet connection is sufficient
+    // For advanced auth, check if user has signed message
+    return true; // Basic auth: wallet connected = authenticated
+    
+    // Alternative: Require message signing for full authentication
+    // return authSuccess || hasSignedMessage;
   };
 
   const authenticate = async () => {
@@ -127,20 +141,11 @@ export function useSolanaAuth() {
     setAuthError(null);
     setAuthSuccess(false);
 
-    // const { token, wallet } = getAuthFromCookies();
-    // if (token && wallet?.toLowerCase() === address.toLowerCase()) {
-    //   setAuthSuccess(true);
-    //   return true;
-    // }
-
-    // if (wallet && wallet.toLowerCase() !== address.toLowerCase()) {
-    //   clearAuthCookies();
-    // }
-
     try {
       const result = await authenticateSolana(address, walletProvider);
       if (result) {
         setAuthSuccess(true);
+        setHasSignedMessage(true);
         toast.success('Authentication successful');
         return true;
       } else {
@@ -156,12 +161,22 @@ export function useSolanaAuth() {
     }
   };
 
+  // Reset auth state when wallet disconnects
   useEffect(() => {
     if (!isConnected) {
-      // clearAuthCookies();
       setAuthSuccess(false);
+      setHasSignedMessage(false);
+      setAuthError(null);
     }
   }, [isConnected]);
+
+  // Auto-authenticate when wallet connects (optional)
+  useEffect(() => {
+    if (isConnected && address && !authSuccess) {
+      // You can uncomment this to auto-authenticate on wallet connection
+      // authenticate();
+    }
+  }, [isConnected, address]);
 
   return {
     isConnected,
@@ -170,6 +185,7 @@ export function useSolanaAuth() {
     isAuthenticating,
     authError,
     authSuccess,
+    hasSignedMessage,
     authenticate,
   };
 }

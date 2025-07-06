@@ -23,6 +23,13 @@ interface StoryFormData {
   price_tokens: number;
 }
 
+// Fixed error type to handle string error messages
+interface StoryFormErrors {
+  title?: string;
+  content?: string;
+  price_tokens?: string;
+}
+
 interface StoryCreationResponse {
   success: boolean;
   message: string;
@@ -59,12 +66,12 @@ export const StoryCreator: React.FC<{
     price_tokens: 0
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<StoryFormData>>({});
+  const [errors, setErrors] = useState<StoryFormErrors>({});
   const [showPreview, setShowPreview] = useState(false);
 
   // Validation functions
   const validateForm = (): boolean => {
-    const newErrors: Partial<StoryFormData> = {};
+    const newErrors: StoryFormErrors = {};
 
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
@@ -175,6 +182,8 @@ export const StoryCreator: React.FC<{
         <button
           onClick={() => setShowPreview(false)}
           className="text-[#8A8A8A] hover:text-white transition-colors"
+          title="Close preview"
+          aria-label="Close preview"
         >
           <Eye className="h-5 w-5" />
         </button>
