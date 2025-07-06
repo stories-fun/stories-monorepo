@@ -1,8 +1,11 @@
 // src/components/stories/StoriesGallery.tsx
+// Updated with navigation to individual story pages
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useAppKitAccount } from '@reown/appkit/react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { 
   Search, 
@@ -18,7 +21,8 @@ import {
   Lock,
   Eye,
   AlertCircle,
-  Shield
+  Shield,
+  ExternalLink
 } from 'lucide-react';
 
 interface Story {
@@ -91,6 +95,7 @@ const StoryCard: React.FC<{
   onReadStory: (story: Story) => void;
   isOwner?: boolean;
 }> = ({ story, index, onReadStory, isOwner = false }) => {
+  const router = useRouter();
   const coverGradient = generateCoverImage(story.title, index);
   const readingTime = calculateReadingTime(story.content);
   const rating = generateRating(story.id);
@@ -111,8 +116,26 @@ const StoryCard: React.FC<{
     return null;
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent navigation if clicking on interactive elements
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
+    // Navigate to story page
+    router.push(`/stories/${story.id}`);
+  };
+
+  const handleReadClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/stories/${story.id}`);
+  };
+
   return (
-    <div className="bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#2A2A2A] hover:border-[#3A3A3A] transition-all duration-300 hover:transform hover:scale-[1.02] group">
+    <div 
+      onClick={handleCardClick}
+      className="bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#2A2A2A] hover:border-[#3A3A3A] transition-all duration-300 hover:transform hover:scale-[1.02] group cursor-pointer"
+    >
       {/* Cover Image */}
       <div 
         className="h-48 relative overflow-hidden"
@@ -147,6 +170,13 @@ const StoryCard: React.FC<{
         <div className="absolute top-8 left-8 w-3 h-3 bg-white/20 rounded-full"></div>
         <div className="absolute bottom-8 right-8 w-2 h-2 bg-white/15 rounded-full"></div>
         <div className="absolute bottom-16 left-16 w-1 h-1 bg-white/25 rounded-full"></div>
+
+        {/* Hover Overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <ExternalLink className="h-8 w-8 text-white" />
+          </div>
+        </div>
       </div>
 
       {/* Card Content */}
@@ -155,6 +185,11 @@ const StoryCard: React.FC<{
         <h3 className="text-white font-bold text-lg mb-3 line-clamp-2 group-hover:text-[#00A3FF] transition-colors">
           {story.title}
         </h3>
+
+        {/* Content Preview */}
+        <p className="text-[#AAAAAA] text-sm mb-4 line-clamp-2 leading-relaxed">
+          {story.content.substring(0, 120)}...
+        </p>
 
         {/* Rating and Reading Time */}
         <div className="flex items-center justify-between mb-4">
@@ -171,7 +206,7 @@ const StoryCard: React.FC<{
 
         {/* Read Button */}
         <button
-          onClick={() => onReadStory(story)}
+          onClick={handleReadClick}
           className={`w-full font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
             story.status === 'submitted' && isOwner
               ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
@@ -180,10 +215,10 @@ const StoryCard: React.FC<{
         >
           <Eye className="h-4 w-4" />
           {story.status === 'submitted' && isOwner 
-            ? 'View draft' 
+            ? 'View Draft' 
             : story.price_tokens > 0 
-              ? 'Read snippet' 
-              : 'Read story'
+              ? 'Read Story' 
+              : 'Read Free'
           }
         </button>
       </div>
@@ -332,6 +367,7 @@ const Pagination: React.FC<{
 
 export const StoriesGallery: React.FC = () => {
   const { address, isConnected } = useAppKitAccount();
+  const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [userInfo, setUserInfo] = useState<{ id: number; username: string } | null>(null);
@@ -461,20 +497,9 @@ export const StoriesGallery: React.FC = () => {
     setPagination(prev => ({ ...prev, offset: newOffset }));
   };
 
-  // Handle story click
+  // Handle story click - navigate to individual story page
   const handleReadStory = (story: Story) => {
-    console.log('Reading story:', story);
-    
-    // Determine if user is the owner
-    const isOwner = userInfo && story.author.id === userInfo.id;
-    
-    if (story.status === 'submitted' && !isOwner) {
-      toast.error('This story is not available for viewing');
-      return;
-    }
-    
-    // Here you would typically navigate to story detail page or open a modal
-    toast.info(`Opening "${story.title}" ${story.price_tokens > 0 && !isOwner ? '(Preview)' : ''}`);
+    router.push(`/stories/${story.id}`);
   };
 
   // Get user info when wallet connects
