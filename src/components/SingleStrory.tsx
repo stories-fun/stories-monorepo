@@ -163,12 +163,12 @@ export function SingleStory({
       {/* Image with author overlay */}
       <div className="relative w-full">
         {author && authorImage && (
-          <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 px-3 py-2 rounded-br-xl z-10">
+          <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10">
             <Image
               src={authorImage}
               alt={author}
-              width={32}
-              height={32}
+              width={48}
+              height={48}
               className="rounded-full"
             />
             <span className="text-sm font-semibold text-white">{author}</span>
