@@ -1,18 +1,76 @@
 "use client";
+
+import { useState } from "react";
 import { SingleStory } from "@/components/SingleStrory";
 
 export default function SingleStoryPage() {
+  const [comments, setComments] = useState([
+    {
+      userImage: "/lady_image.svg",
+      userName: "Toffani.ok",
+      comment: "Ultricies ultricies interdum dolor sodales...",
+      createdAt: "6h",
+      replies: [
+        {
+          userImage: "/lady_image.svg",
+          userName: "Toffani.ok",
+          comment: "Ultricies ultricies interdum...",
+          createdAt: "6h",
+        },
+      ],
+    },
+  ]);
+
+  const handleNewComment = (text: string) => {
+    if (!text.trim()) return;
+    setComments([
+      ...comments,
+      {
+        userImage: "/lady_image.svg",
+        userName: "You",
+        comment: text,
+        createdAt: "Just now",
+        replies: [],
+      },
+    ]);
+  };
+
+  const handleReplySubmit = (commentId: string, text: string) => {
+    if (!text.trim()) return;
+
+    setComments((prev) =>
+      prev.map((c, i) => {
+        const id = `comment-${i}`;
+        if (id === commentId) {
+          return {
+            ...c,
+            replies: [
+              ...(c.replies || []),
+              {
+                userImage: "/lady_image.svg",
+                userName: "You",
+                comment: text,
+                createdAt: "now",
+              },
+            ],
+          };
+        }
+        return c;
+      })
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center">
       <div className="w-full max-w-[1400px] flex justify-center items-center px-4">
-      <SingleStory
-        title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
-        timeToRead="5 mins"
-        price={43.3}
-        change={4.5}
-        author="Tiffany Fong"
-        authorImage="/lady_image.svg"
-        storyContent="
+        <SingleStory
+          title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
+          timeToRead="5 mins"
+          price={43.3}
+          change={4.5}
+          author="Tiffany Fong"
+          authorImage="/lady_image.svg"
+          storyContent="
 
 <p>I was raised by a single mom in Section 8 housing. By 11, I’d seen people shot. By 14, I was working multiple jobs just to stop asking her for money.</p>
 
@@ -82,8 +140,11 @@ And no matter how far gone you feel—there’s always a way out.</strong></p>
 
 <p><strong>My name is Quan.<br>
 And this is how I fight, heal, and build in Web3.</strong></p>"
-      />
-    </div>
+          comments={comments}
+          onNewComment={handleNewComment}
+          onReplySubmit={handleReplySubmit}
+        />
+      </div>
     </div>
   );
 }

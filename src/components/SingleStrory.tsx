@@ -1,27 +1,28 @@
 "use client";
 
 import Image from "next/image";
-import CustomButton from "./Button";
-import { Clock5 } from "lucide-react";
+import { Clock5, ArrowUpCircle } from "lucide-react";
 import { useState } from "react";
+
+type CommentProps = {
+  userImage: string;
+  userName: string;
+  comment: string;
+  createdAt: string;
+  replies?: CommentProps[];
+};
 
 interface SingleStoryProps {
   title: string;
-  url?: string;
   timeToRead?: string;
   price?: number;
   change?: number;
   author?: string;
   authorImage?: string;
   storyContent?: string;
-}
-
-interface CommentProps {
-  userImage: string;
-  userName: string;
-  comment: string;
-  createdAt: string;
-  replies?: CommentProps[];
+  comments: CommentProps[];
+  onNewComment: (text: string) => void;
+  onReplySubmit: (commentId: string, text: string) => void;
 }
 
 export function SingleStory({
@@ -32,6 +33,9 @@ export function SingleStory({
   author,
   authorImage,
   storyContent,
+  comments,
+  onNewComment,
+  onReplySubmit,
 }: SingleStoryProps) {
   const isPositive = change !== undefined && change >= 0;
   const changeColor = isPositive ? "text-green-700" : "text-red-700";
@@ -39,128 +43,107 @@ export function SingleStory({
 
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
-
-  // Sample comments data
-  const comments: CommentProps[] = [
-    {
-      userImage: "/api/placeholder/40/40",
-      userName: "Toffani.ok",
-      comment: "Ultricies ultricies interdum dolor sodales. Vitae feugiat vitae vitae quis id consectetur. Aenean urna, lectus enim suscipit eget. Tristique bibendum nibh enim dui.",
-      createdAt: "6h",
-      replies: [
-        {
-          userImage: "/api/placeholder/40/40",
-          userName: "Toffani.ok",
-          comment: "Ultricies ultricies interdum dolor sodales. Vitae feugiat vitae vitae quis",
-          createdAt: "6h"
-        }
-      ]
-    },
-    {
-      userImage: "/api/placeholder/40/40",
-      userName: "Toffani.ok",
-      comment: "Ultricies ultricies interdum dolor sodales. Vitae feugiat vitae vitae quis id consectetur. Aenean urna, lectus enim suscipit eget. Tristique bibendum nibh enim dui.",
-      createdAt: "6h"
-    }
-  ];
+  const [newComment, setNewComment] = useState("");
 
   const handleReply = (commentId: string) => {
     setReplyingTo(replyingTo === commentId ? null : commentId);
     setReplyText("");
   };
 
-  const handleReplySubmit = (commentId: string) => {
-    if (replyText.trim()) {
-      // Here you would typically add the reply to your comments data
-      console.log(`Reply to ${commentId}: ${replyText}`);
-      setReplyingTo(null);
-      setReplyText("");
-    }
-  };
+  const CommentComponent = ({
+    comment,
+    isReply = false,
+    commentId,
+  }: {
+    comment: CommentProps;
+    isReply?: boolean;
+    commentId: string;
+  }) => (
+    <div className={`${isReply ? "ml-12 mt-4" : "mb-6"}`}>
+      <div className="flex gap-3">
+        <Image
+          src={comment.userImage}
+          alt={comment.userName}
+          width={40}
+          height={40}
+          className="rounded-full flex-shrink-0"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-semibold text-[#141414]">
+              {comment.userName}
+            </span>
+          </div>
+          <p className="text-[#141414] text-sm mb-3 leading-relaxed">
+            {comment.comment}
+          </p>
+          <div className="flex items-center gap-4 text-sm">
+            <button className="text-green-600 font-medium hover:text-green-700">
+              Like
+            </button>
+            <span className="text-gray-400">•</span>
+            <button
+              onClick={() => handleReply(commentId)}
+              className="text-green-600 font-medium hover:text-green-700"
+            >
+              Reply
+            </button>
+            <span className="text-gray-400">•</span>
+            <span className="text-gray-600">{comment.createdAt}</span>
+          </div>
+        </div>
+      </div>
 
-  const CommentComponent = ({ comment, isReply = false, commentId }: { comment: CommentProps; isReply?: boolean; commentId?: string }) => {
-    const uniqueId = commentId || `${comment.userName}-${comment.createdAt}`;
-    
-    return (
-      <div className={`${isReply ? 'ml-12 mt-4' : 'mb-6'}`}>
-        <div className="flex gap-3">
+      {replyingTo === commentId && (
+        <div className="flex gap-3 mt-4 ml-12">
           <Image
-            src={comment.userImage}
-            alt={comment.userName}
-            width={40}
-            height={40}
+            src="/lady_image.svg"
+            alt="Your avatar"
+            width={32}
+            height={32}
             className="rounded-full flex-shrink-0"
           />
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-semibold text-[#141414]">{comment.userName}</span>
-            </div>
-            <p className="text-[#141414] text-sm mb-3 leading-relaxed">
-              {comment.comment}
-            </p>
-            <div className="flex items-center gap-4 text-sm">
-              <button className="text-green-600 font-medium hover:text-green-700">
-                Like
-              </button>
-              <span className="text-gray-400">•</span>
-              <button 
-                onClick={() => handleReply(uniqueId)}
-                className="text-green-600 font-medium hover:text-green-700"
-              >
-                Reply
-              </button>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-600">{comment.createdAt}</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Reply input box */}
-        {replyingTo === uniqueId && (
-          <div className="flex gap-3 mt-4 ml-12">
-            <Image
-              src="/api/placeholder/40/40"
-              alt="Your avatar"
-              width={32}
-              height={32}
-              className="rounded-full flex-shrink-0"
-            />
-            <div className="flex-1 relative">
+            <div className="flex items-center bg-[#E8DCA6] rounded-full px-4 py-2 w-full">
               <input
                 type="text"
                 placeholder={`Reply to ${comment.userName}...`}
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                className="w-full bg-[#E8DCA6] text-[#141414] px-4 py-2 rounded-full border-none outline-none placeholder:text-gray-600 text-sm"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleReplySubmit(uniqueId);
-                  }
-                }}
+                className="flex-1 bg-transparent text-[#141414] text-sm focus:outline-none"
                 autoFocus
               />
-              <button 
-                onClick={() => handleReplySubmit(uniqueId)}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-green-600 text-white p-1.5 rounded-full hover:bg-green-700"
+              <button
+                onClick={() => {
+                  if (replyText.trim()) {
+                    onReplySubmit(commentId, replyText.trim());
+                    setReplyingTo(null);
+                    setReplyText("");
+                  }
+                }}
+                className="text-green-700 hover:text-green-800 ml-2"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <ArrowUpCircle size={20} />
               </button>
             </div>
           </div>
-        )}
-        
-        {comment.replies && comment.replies.map((reply, index) => (
-          <CommentComponent key={index} comment={reply} isReply={true} commentId={`${uniqueId}-reply-${index}`} />
-        ))}
-      </div>
-    );
-  };
+        </div>
+      )}
+
+      {comment.replies?.map((reply, i) => (
+        <CommentComponent
+          key={i}
+          comment={reply}
+          isReply={true}
+          commentId={`${commentId}-reply-${i}`}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <div className="text-white max-w-[770px] mt-20 relative">
-      {/* Image with author overlay */}
+      {/* Author Info */}
       <div className="relative w-full">
         {author && authorImage && (
           <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10">
@@ -175,7 +158,7 @@ export function SingleStory({
           </div>
         )}
       </div>
-      
+
       {/* Content */}
       <div className="bg-[#FFF6C9] text-[#141414] py-4 px-4 relative">
         <div className="flex justify-between items-center mt-8">
@@ -189,7 +172,7 @@ export function SingleStory({
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-2">
           {price !== undefined && (
             <span className={`font-bold text-lg ${changeColor}`}>{price}</span>
@@ -204,7 +187,8 @@ export function SingleStory({
             </>
           )}
         </div>
-        
+
+        {/* HTML Story */}
         {storyContent && (
           <div
             className="mt-4 mb-5 space-y-4 pb-10
@@ -219,41 +203,51 @@ export function SingleStory({
             dangerouslySetInnerHTML={{ __html: storyContent }}
           />
         )}
-        
-        {/* Comments Section */}
-        <div className="mt-8 mb-16">
-          {/* Add Comment Input */}
-          <div className="flex gap-3 mb-8">
+
+        {/* Add Comment */}
+        <div className="mt-8 mb-6 pb-6">
+          <div className="flex gap-3 mb-6">
             <Image
-              src="/api/placeholder/40/40"
+              src="/lady_image.svg"
               alt="Your avatar"
               width={40}
               height={40}
               className="rounded-full flex-shrink-0"
             />
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Add comment..."
-                className="w-full bg-[#E8DCA6] text-[#141414] px-4 py-3 rounded-full border-none outline-none placeholder:text-gray-600"
-              />
-              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+            <div className="flex-1">
+              <div className="flex items-center bg-[#E8DCA6] rounded-full px-4 py-2 w-full">
+                <input
+                  type="text"
+                  placeholder="Add comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="flex-1 bg-transparent text-[#141414] text-sm focus:outline-none"
+                />
+                <button
+                  onClick={() => {
+                    if (newComment.trim()) {
+                      onNewComment(newComment.trim());
+                      setNewComment("");
+                    }
+                  }}
+                  className="text-green-700 hover:text-green-800 ml-2"
+                >
+                  <ArrowUpCircle size={20} />
+                </button>
+              </div>
             </div>
           </div>
-          
+
           {/* Comments List */}
-          <div className="space-y-4">
-            {comments.map((comment, index) => (
-              <CommentComponent key={index} comment={comment} commentId={`comment-${index}`} />
-            ))}
-          </div>
+          {comments.map((comment, index) => (
+            <CommentComponent
+              key={index}
+              comment={comment}
+              commentId={`comment-${index}`}
+            />
+          ))}
         </div>
-        
-        {/* Wave SVG at the bottom -desktop */}
+         {/* Wave SVG at the bottom -desktop */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden sm:h-[100px] hidden sm:block">
           <svg 
             width="100%" 
