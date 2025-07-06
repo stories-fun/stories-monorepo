@@ -52,7 +52,6 @@ const Navbar = () => {
           onClick={() => console.log("Wallet clicked")}
           className="whitespace-nowrap flex-shrink-0"
         />
-
         {/* User Modal */}
         <UserModal
           isOpen={isUserModalOpen}
