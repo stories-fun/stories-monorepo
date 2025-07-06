@@ -45,7 +45,7 @@ export default function NewCarousel({
     <div
       className={cn("relative w-full flex flex-col items-center", className)}
     >
-      <div className="w-full flex justify-center mb-8 h-16">
+      <div className="w-full flex justify-center mb-2">
         <AnimatePresence mode="wait">
           <motion.div
             key={items[activeIndex]?.title}
@@ -53,7 +53,7 @@ export default function NewCarousel({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="relative inline-block bg-white px-8 py-4 font-extrabold text-xl sm:text-2xl text-black"
+            className="relative inline-block bg-white px-8 py-2 font-extrabold text-xl text-black"
           >
             {items[activeIndex]?.title}
           </motion.div>
