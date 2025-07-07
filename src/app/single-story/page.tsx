@@ -217,7 +217,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
               />
             </div>
           ) : (
-            <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-50">
+            <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-1">
               <div className="flex gap-4 px-4 items-center justify-center">
                 <CustomButton
                   onClick={toggleTheme}
