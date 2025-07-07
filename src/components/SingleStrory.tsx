@@ -276,7 +276,7 @@ export function SingleStory({
           ))}
         </div>
 
-        {/* Decorative Wave SVG */}
+        {/* Wave SVG at the bottom -desktop */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden sm:h-[100px] hidden sm:block">
           <svg
             width="100%"
@@ -287,16 +287,28 @@ export function SingleStory({
             className="block"
           >
             <defs>
-              <path
-                id="wavepath"
-                d="M 0 100 0 70 Q 42.5 25 85 70 t 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 v70 z"
-              />
+              <path id="wavepath" d="M 0 100 0 70 Q 42.5 25 85 70 t 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 v70 z" />
             </defs>
             <g>
-              <use
-                xlinkHref="#wavepath"
-                fill={theme === "dark" ? "#141414" : "#FFF6C9"}
-              />
+              <use xlinkHref="#wavepath" fill="#141414" />
+            </g>
+          </svg>
+        </div>
+        {/* Wave SVG at the bottom -mobile */}
+        <div className="absolute bottom-0 left-0 w-full overflow-hidden sm:h-[100px] block sm:hidden">
+          <svg
+            width="100%"
+            height={50}
+            viewBox="0 0 1000 100"
+            xmlns="http://www.w3.org/2000/svg"
+            preserveAspectRatio="none"
+            className="block"
+          >
+            <defs>
+              <path id="wavepath" d="M 0 100 0 70 Q 42.5 25 85 70 t 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 85 0 v70 z" />
+            </defs>
+            <g>
+              <use xlinkHref="#wavepath" fill="#141414" />
             </g>
           </svg>
         </div>

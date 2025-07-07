@@ -151,12 +151,12 @@ And this is how I fight, heal, and build in Web3.</strong></p>"
             onNewComment={handleNewComment}
             onReplySubmit={handleReplySubmit}
           />
-          <CustomButton
+        </ThemeContext.Provider>
+      </div>
+      <CustomButton
             onClick={toggleTheme}
             text={`${theme === "light" ? "Light" : "Dark"}`}
           />
-        </ThemeContext.Provider>
-      </div>
     </div>
   );
 }
