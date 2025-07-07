@@ -49,7 +49,7 @@ export default function StoryModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-150 px-4">
       <div className="relative">
         {/* Modal card */}
         <div className="bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg relative shadow-xl border border-[#141414]">

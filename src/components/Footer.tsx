@@ -8,7 +8,7 @@ export default function Footer() {
     "font-bold text-[20px] leading-[150%] tracking-normal text-center";
 
   return (
-    <footer className="w-full bg-[#141414] text-[#FFEEBA] pt-16 pb-10 relative overflow-hidden">
+    <footer className="w-full bg-[#141414] text-[#FFEEBA] pt-16 pb-10 relative overflow-hidden z-100">
       {/* Cloud Left */}
       <div className="absolute top-0 left-0 w-[120px] sm:w-[160px] mb-10">
         <Image
