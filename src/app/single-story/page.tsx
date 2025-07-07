@@ -187,7 +187,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
         {/* Conditional buttons */}
         {showButtons &&
           (isWideScreen ? (
-            <div className="fixed top-1/2 -translate-y-1/2 right-[200px] z-50 flex flex-col gap-4 items-center">
+            <div className="fixed top-1/2 -translate-y-1/2 right-[200px] z-1 flex flex-col gap-4 items-center">
               <CustomButton
                 onClick={toggleTheme}
                 icon={theme === "light" ? MoonIcon : Sun}
