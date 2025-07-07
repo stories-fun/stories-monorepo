@@ -8,8 +8,6 @@ import { MoonIcon, Sun, Share2, Gift, Volume2 } from "lucide-react";
 export default function SingleStoryPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isWideScreen, setIsWideScreen] = useState(false);
-  const [showButtons, setShowButtons] = useState(true); // 👈 NEW
-  const storyRef = useRef<HTMLDivElement>(null); // 👈 NEW
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -59,7 +57,6 @@ export default function SingleStoryPage() {
     }
   };
 
-  // ✅ Detect screen width
   useEffect(() => {
     const handleResize = () => {
       setIsWideScreen(window.innerWidth >= 1500);
@@ -97,7 +94,7 @@ export default function SingleStoryPage() {
     <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center px-4 py-8">
       <div className="w-full max-w-[1400px] relative flex justify-center px-4">
         {/* Centered Story Component */}
-        <div ref={storyRef} className="max-w-[750px] w-full z-10">
+        <div className="max-w-[750px] w-full z-10">
           <ThemeContext.Provider value={{ theme, toggleTheme }}>
             <SingleStory
               title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
@@ -185,9 +182,39 @@ And this is how I fight, heal, and build in Web3.</strong></p>
         </div>
 
         {/* Conditional buttons */}
-        {showButtons &&
-          (isWideScreen ? (
-            <div className="fixed top-1/2 -translate-y-1/2 right-[200px] z-1 flex flex-col gap-4 items-center">
+        {isWideScreen ? (
+          <div className="fixed top-1/2 -translate-y-1/2 right-[200px] z-1 flex flex-col gap-4 items-center">
+            <CustomButton
+              onClick={toggleTheme}
+              icon={theme === "light" ? MoonIcon : Sun}
+              className="rounded-full"
+            />
+            <CustomButton
+              onClick={handleShare}
+              icon={Share2}
+              className="rounded-full"
+            />
+            <CustomButton
+              onClick={() => console.log("Gift clicked")}
+              icon={Gift}
+              text="Perks"
+              className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+            />
+            <CustomButton
+              onClick={() => console.log("Volume clicked")}
+              text="Listen"
+              icon={Volume2}
+              className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+            />
+            <CustomButton
+              onClick={() => console.log("Trade clicked")}
+              text="Trade"
+              className="w-full rounded-lg"
+            />
+          </div>
+        ) : (
+          <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-1">
+            <div className="flex gap-4 px-4 items-center justify-center">
               <CustomButton
                 onClick={toggleTheme}
                 icon={theme === "light" ? MoonIcon : Sun}
@@ -201,52 +228,21 @@ And this is how I fight, heal, and build in Web3.</strong></p>
               <CustomButton
                 onClick={() => console.log("Gift clicked")}
                 icon={Gift}
-                text="Perks"
-                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
               <CustomButton
                 onClick={() => console.log("Volume clicked")}
-                text="Listen"
                 icon={Volume2}
-                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
               <CustomButton
                 onClick={() => console.log("Trade clicked")}
                 text="Trade"
-                className="w-full rounded-lg"
+                className="rounded-lg"
               />
             </div>
-          ) : (
-            <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-1">
-              <div className="flex gap-4 px-4 items-center justify-center">
-                <CustomButton
-                  onClick={toggleTheme}
-                  icon={theme === "light" ? MoonIcon : Sun}
-                  className="rounded-full"
-                />
-                <CustomButton
-                  onClick={handleShare}
-                  icon={Share2}
-                  className="rounded-full"
-                />
-                <CustomButton
-                  onClick={() => console.log("Gift clicked")}
-                  icon={Gift}
-                  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
-                />
-                <CustomButton
-                  onClick={() => console.log("Volume clicked")}
-                  icon={Volume2}
-                  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
-                />
-                <CustomButton
-                  onClick={() => console.log("Trade clicked")}
-                  text="Trade"
-                  className="rounded-lg"
-                />
-              </div>
-            </div>
-          ))}
+          </div>
+        )}
       </div>
     </div>
   );
