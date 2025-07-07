@@ -1,9 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { SingleStory } from "@/components/SingleStrory";
+import { SingleStory, ThemeContext } from "@/components/SingleStrory";
+import CustomButton from "@/components/Button";
 
 export default function SingleStoryPage() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
   const [comments, setComments] = useState([
     {
       userImage: "/lady_image.svg",
@@ -63,14 +68,16 @@ export default function SingleStoryPage() {
   return (
     <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center">
       <div className="w-full max-w-[1400px] flex justify-center items-center px-4">
-        <SingleStory
-          title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
-          timeToRead="5 mins"
-          price={43.3}
-          change={4.5}
-          author="Tiffany Fong"
-          authorImage="/lady_image.svg"
-          storyContent="
+        {/* Theme Context Provider wraps SingleStory */}
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+          <SingleStory
+            title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
+            timeToRead="5 mins"
+            price={43.3}
+            change={4.5}
+            author="Tiffany Fong"
+            authorImage="/lady_image.svg"
+            storyContent="
 
 <p>I was raised by a single mom in Section 8 housing. By 11, I’d seen people shot. By 14, I was working multiple jobs just to stop asking her for money.</p>
 
@@ -140,10 +147,15 @@ And no matter how far gone you feel—there’s always a way out.</strong></p>
 
 <p><strong>My name is Quan.<br>
 And this is how I fight, heal, and build in Web3.</strong></p>"
-          comments={comments}
-          onNewComment={handleNewComment}
-          onReplySubmit={handleReplySubmit}
-        />
+            comments={comments}
+            onNewComment={handleNewComment}
+            onReplySubmit={handleReplySubmit}
+          />
+          <CustomButton
+            onClick={toggleTheme}
+            text={`${theme === "light" ? "Light" : "Dark"}`}
+          />
+        </ThemeContext.Provider>
       </div>
     </div>
   );
