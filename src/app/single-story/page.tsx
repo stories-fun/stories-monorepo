@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { SingleStory, ThemeContext } from "@/components/SingleStrory";
 import CustomButton from "@/components/Button";
-import { MoonIcon, Sun } from "lucide-react";
+import { MoonIcon, Sun, Share2, Gift, Volume2 } from "lucide-react";
 
 export default function SingleStoryPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [isWideScreen, setIsWideScreen] = useState(false);
+  const [showButtons, setShowButtons] = useState(true); // 👈 NEW
+  const storyRef = useRef<HTMLDivElement>(null); // 👈 NEW
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
+
   const [comments, setComments] = useState([
     {
       userImage: "/lady_image.svg",
@@ -41,9 +45,32 @@ export default function SingleStoryPage() {
     ]);
   };
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: "Check out this story!",
+          text: "From Witness to Training the Most Famous Man in Crypto: My Journey from Pain to Power",
+          url: window.location.href,
+        })
+        .catch((error) => {
+          console.error("Error sharing:", error);
+        });
+    }
+  };
+
+  // ✅ Detect screen width
+  useEffect(() => {
+    const handleResize = () => {
+      setIsWideScreen(window.innerWidth >= 1500);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleReplySubmit = (commentId: string, text: string) => {
     if (!text.trim()) return;
-
     setComments((prev) =>
       prev.map((c, i) => {
         const id = `comment-${i}`;
@@ -67,18 +94,19 @@ export default function SingleStoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center">
-      <div className="w-full max-w-[1400px] flex justify-center items-center px-4">
-        {/* Theme Context Provider wraps SingleStory */}
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
-          <SingleStory
-            title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
-            timeToRead="5 mins"
-            price={43.3}
-            change={4.5}
-            author="Tiffany Fong"
-            authorImage="/lady_image.svg"
-            storyContent="
+    <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center px-4 py-8">
+      <div className="w-full max-w-[1400px] relative flex justify-center px-4">
+        {/* Centered Story Component */}
+        <div ref={storyRef} className="max-w-[750px] w-full z-10">
+          <ThemeContext.Provider value={{ theme, toggleTheme }}>
+            <SingleStory
+              title="From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power"
+              timeToRead="5 mins"
+              price={43.3}
+              change={4.5}
+              author="Tiffany Fong"
+              authorImage="/lady_image.svg"
+              storyContent={`
 
 <p>I was raised by a single mom in Section 8 housing. By 11, I’d seen people shot. By 14, I was working multiple jobs just to stop asking her for money.</p>
 
@@ -147,18 +175,79 @@ You don’t need permission to start.<br>
 And no matter how far gone you feel—there’s always a way out.</strong></p>
 
 <p><strong>My name is Quan.<br>
-And this is how I fight, heal, and build in Web3.</strong></p>"
-            comments={comments}
-            onNewComment={handleNewComment}
-            onReplySubmit={handleReplySubmit}
-          />
-        </ThemeContext.Provider>
+And this is how I fight, heal, and build in Web3.</strong></p>
+`}
+              comments={comments}
+              onNewComment={handleNewComment}
+              onReplySubmit={handleReplySubmit}
+            />
+          </ThemeContext.Provider>
+        </div>
+
+        {/* Conditional buttons */}
+        {showButtons &&
+          (isWideScreen ? (
+            <div className="fixed top-1/2 -translate-y-1/2 right-[200px] z-50 flex flex-col gap-4 items-center">
+              <CustomButton
+                onClick={toggleTheme}
+                icon={theme === "light" ? MoonIcon : Sun}
+                className="rounded-full"
+              />
+              <CustomButton
+                onClick={handleShare}
+                icon={Share2}
+                className="rounded-full"
+              />
+              <CustomButton
+                onClick={() => console.log("Gift clicked")}
+                icon={Gift}
+                text="Perks"
+                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+              />
+              <CustomButton
+                onClick={() => console.log("Volume clicked")}
+                text="Listen"
+                icon={Volume2}
+                className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+              />
+              <CustomButton
+                onClick={() => console.log("Trade clicked")}
+                text="Trade"
+                className="w-full rounded-lg"
+              />
+            </div>
+          ) : (
+            <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-50">
+              <div className="flex gap-4 px-4 items-center justify-center">
+                <CustomButton
+                  onClick={toggleTheme}
+                  icon={theme === "light" ? MoonIcon : Sun}
+                  className="rounded-full"
+                />
+                <CustomButton
+                  onClick={handleShare}
+                  icon={Share2}
+                  className="rounded-full"
+                />
+                <CustomButton
+                  onClick={() => console.log("Gift clicked")}
+                  icon={Gift}
+                  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
+                />
+                <CustomButton
+                  onClick={() => console.log("Volume clicked")}
+                  icon={Volume2}
+                  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
+                />
+                <CustomButton
+                  onClick={() => console.log("Trade clicked")}
+                  text="Trade"
+                  className="rounded-lg"
+                />
+              </div>
+            </div>
+          ))}
       </div>
-      <CustomButton
-            onClick={toggleTheme}
-            icon={theme === "light" ? MoonIcon : Sun}
-            className="rounded-2xl"
-          />
     </div>
   );
 }

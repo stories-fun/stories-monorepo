@@ -17,12 +17,16 @@ const CustomButton = ({
   className = "",
   disabled = false,
 }: CustomButtonProps) => {
+  const iconOnly = Icon && !text;
+
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={twMerge(`
-        inline-flex items-center gap-3 px-6 py-2
+      className={twMerge(
+        `
+        inline-flex items-center justify-center gap-3
+        ${iconOnly ? "w-12 h-12 p-0" : "px-6 py-2"}
         bg-green-500 hover:bg-green-600 active:bg-green-700
         text-white font-bold text-lg
         rounded-full border border-black cursor-pointer
@@ -30,10 +34,12 @@ const CustomButton = ({
         disabled:opacity-50 disabled:cursor-not-allowed
         focus:outline-none focus:ring-4 focus:ring-green-300
         shadow-lg hover:shadow-xl
-      `, className)}
+      `,
+        className
+      )}
     >
-      {Icon && <Icon size={24} className="hidden sm:block" />}
-      <span>{text}</span>
+      {Icon && <Icon size={24} />}
+      {text && <span>{text}</span>}
     </button>
   );
 };
