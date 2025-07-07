@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SingleStory, ThemeContext } from "@/components/SingleStrory";
 import CustomButton from "@/components/Button";
+import { MoonIcon, Sun } from "lucide-react";
 
 export default function SingleStoryPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
@@ -155,7 +156,8 @@ And this is how I fight, heal, and build in Web3.</strong></p>"
       </div>
       <CustomButton
             onClick={toggleTheme}
-            text={`${theme === "light" ? "Light" : "Dark"}`}
+            icon={theme === "light" ? MoonIcon : Sun}
+            className="rounded-2xl"
           />
     </div>
   );

@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface CustomButtonProps {
-  text: string | ReactNode;
+  text?: string | ReactNode;
   icon?: LucideIcon;
   onClick?: () => void;
   className?: string;
