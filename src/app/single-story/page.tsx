@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { SingleStory, ThemeContext } from "@/components/SingleStrory";
 import CustomButton from "@/components/Button";
 import { MoonIcon, Sun, Share2, Gift, Volume2 } from "lucide-react";
+import StoryModal from "@/components/StoryModal";
 
 export default function SingleStoryPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isWideScreen, setIsWideScreen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -88,6 +90,10 @@ export default function SingleStoryPage() {
         return c;
       })
     );
+  };
+
+  const handlePerksClick = () => {
+    setIsModalOpen(true);
   };
 
   return (
@@ -195,7 +201,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
               className="rounded-full"
             />
             <CustomButton
-              onClick={() => console.log("Gift clicked")}
+              onClick={handlePerksClick}
               icon={Gift}
               text="Perks"
               className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
@@ -213,7 +219,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
             />
           </div>
         ) : (
-          <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-1">
+          <div className="fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-50">
             <div className="flex gap-4 px-4 items-center justify-center">
               <CustomButton
                 onClick={toggleTheme}
@@ -226,7 +232,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
                 className="rounded-full"
               />
               <CustomButton
-                onClick={() => console.log("Gift clicked")}
+                onClick={handlePerksClick}
                 icon={Gift}
                 className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
@@ -243,6 +249,12 @@ And this is how I fight, heal, and build in Web3.</strong></p>
             </div>
           </div>
         )}
+        {/* Story Modal */}
+        <StoryModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          type="perks"
+        />
       </div>
     </div>
   );
