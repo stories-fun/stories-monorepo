@@ -49,9 +49,9 @@ export default function NewCarousel({
         <AnimatePresence mode="wait">
           <motion.div
             key={items[activeIndex]?.title}
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+            exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
             className="relative inline-block bg-white px-8 py-2 font-extrabold text-xl text-black"
           >
