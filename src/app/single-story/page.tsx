@@ -5,11 +5,13 @@ import { SingleStory, ThemeContext } from "@/components/SingleStrory";
 import CustomButton from "@/components/Button";
 import { MoonIcon, Sun, Share2, Gift, Volume2 } from "lucide-react";
 import StoryModal from "@/components/StoryModal";
+import TradeModal from "@/components/TradeModal";
 
 export default function SingleStoryPage() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -94,6 +96,10 @@ export default function SingleStoryPage() {
 
   const handlePerksClick = () => {
     setIsModalOpen(true);
+  };
+
+  const handleTradeClick = () => {
+    setIsTradeModalOpen(true);
   };
 
   return (
@@ -213,7 +219,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
               className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
             />
             <CustomButton
-              onClick={() => console.log("Trade clicked")}
+              onClick={handleTradeClick}
               text="Trade"
               className="w-full rounded-lg"
             />
@@ -242,7 +248,7 @@ And this is how I fight, heal, and build in Web3.</strong></p>
                 className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
               <CustomButton
-                onClick={() => console.log("Trade clicked")}
+                onClick={handleTradeClick}
                 text="Trade"
                 className="rounded-lg"
               />
@@ -252,8 +258,13 @@ And this is how I fight, heal, and build in Web3.</strong></p>
         {/* Story Modal */}
         <StoryModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onCloseAction={() => setIsModalOpen(false)}
           type="perks"
+        />
+        {/* Trade Modal */}
+        <TradeModal
+          isOpen={isTradeModalOpen}
+          onCloseAction={() => setIsTradeModalOpen(false)}
         />
       </div>
     </div>

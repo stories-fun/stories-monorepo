@@ -116,7 +116,7 @@ export default function OurStory() {
       {/* Modal */}
       <StoryModal
         isOpen={!!modalType}
-        onClose={closeModal}
+        onCloseAction={closeModal}
         type={modalType as any}
         story={selectedStory}
       />

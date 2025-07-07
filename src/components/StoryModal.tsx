@@ -19,14 +19,14 @@ type ModalType = "snippet" | "unlocked" | "perks";
 
 interface StoryModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onCloseAction: () => void;
   type: ModalType;
   story?: Story;
 }
 
 export default function StoryModal({
   isOpen,
-  onClose,
+  onCloseAction,
   type,
   story,
 }: StoryModalProps) {
@@ -183,7 +183,7 @@ export default function StoryModal({
 
                 <CustomButton
                   text="Got it!"
-                  onClick={onClose}
+                  onClick={onCloseAction}
                   className="w-full justify-center mt-4"
                 />
               </div>
@@ -193,7 +193,7 @@ export default function StoryModal({
 
         {/* Close button at bottom center */}
         <button
-          onClick={onClose}
+          onClick={onCloseAction}
           className="absolute left-1/2 text-black translate-x-[-50%] top-full mt-4 w-10 h-10 rounded-full bg-[#FFEEBA] border border-[#141414] flex items-center justify-center shadow-md hover:text-red-600 transition-all z-10"
         >
           <X size={20} />
