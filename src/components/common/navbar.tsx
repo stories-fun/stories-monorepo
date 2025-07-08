@@ -58,9 +58,8 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/', label: 'S.', protected: false, isLogo: true },
-    { path: '/our-story', label: 'Our Story', protected: false },
-    { path: '/stories', label: 'Stories', protected: false },
-    { path: '/swap', label: 'Trade', protected: false },
+    { path: '/stories', label: 'Stories', protected: true },
+    { path: '/swap', label: 'Trade', protected: true },
     // Admin link - only show if user is admin
     ...(isAdmin ? [{ path: '/admin', label: 'Admin', protected: false, adminOnly: true }] : []),
   ];
@@ -99,7 +98,7 @@ const Navbar = () => {
     if (isProtected && !isAuthenticated) {
       e.preventDefault();
       toast.error('Authentication Required', {
-        description: 'Please connect your wallet to access this page',
+        description: 'Please connect and authenticate your wallet to access this page',
         position: 'top-center',
       });
       return;
@@ -124,7 +123,7 @@ const Navbar = () => {
               ) : (
                 <Link
                   key={item.path}
-                  href={item.path} // Always allow href for admin routes
+                  href={item.protected && !isAuthenticated ? '#' : item.path}
                   className={getNavItemClass(item.path)}
                   onClick={(e) => handleProtectedRouteClick(e, item.protected, item.adminOnly)}
                   title={item.adminOnly ? 'Admin Dashboard' : undefined}
