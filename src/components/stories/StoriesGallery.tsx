@@ -58,6 +58,9 @@ interface StoriesResponse {
   };
   message?: string;
 }
+interface StoriesGalleryProps {
+  onViewStory?: (story: Story) => void;
+}
 
 // Generate a random cover image based on story title
 const generateCoverImage = (title: string, index: number) => {
@@ -117,19 +120,15 @@ const StoryCard: React.FC<{
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent navigation if clicking on interactive elements
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    
-    // Navigate to story page
-    router.push(`/stories/${story.id}`);
+    if ((e.target as HTMLElement).closest('button')) return;
+    onReadStory(story);
   };
-
+  
   const handleReadClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/stories/${story.id}`);
+    onReadStory(story);
   };
+  
 
   return (
     <div 
@@ -365,7 +364,7 @@ const Pagination: React.FC<{
   );
 };
 
-export const StoriesGallery: React.FC = () => {
+export const StoriesGallery: React.FC<StoriesGalleryProps> = ({ onViewStory }) => {
   const { address, isConnected } = useAppKitAccount();
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
@@ -499,8 +498,13 @@ export const StoriesGallery: React.FC = () => {
 
   // Handle story click - navigate to individual story page
   const handleReadStory = (story: Story) => {
-    router.push(`/stories/${story.id}`);
+    if (onViewStory) {
+      onViewStory(story); // trigger modal in parent
+    } else {
+      router.push(`/stories/${story.id}`);
+    }
   };
+  
 
   // Get user info when wallet connects
   useEffect(() => {
