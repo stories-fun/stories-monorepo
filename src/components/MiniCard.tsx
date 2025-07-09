@@ -15,7 +15,7 @@ export function MiniCard({ image, title, price, change }: MiniCardProps) {
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="relative overflow-hidden text-white max-w-[270px] w-full h-[220px] flex flex-col bg-black">
+    <div className="relative overflow-hidden text-white sm:max-w-[270px] w-full h-[220px] flex flex-col bg-black">
       {/* Image section */}
       <div className="relative w-full h-[140px]">
         <Image src={image} alt={title} fill className="object-cover" />

@@ -104,7 +104,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-[40px] mb-6 sm:mb-10 px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-[40px] mb-6 sm:mb-10 px-4">
           {visibleStories.map((story, index) => (
             <div key={index} className="flex flex-col">
               <MiniCard {...story} />
