@@ -24,7 +24,7 @@ export function MiniCard({ image, title, price, change }: MiniCardProps) {
       {/* Content section */}
       <div className="bg-[#FFF6C9] text-[#141414] px-2 py-2 flex justify-between items-center h-[80px]">
         {/* Title */}
-        <h3 className="font-extrabold text-[16px] leading-tight line-clamp-2 max-w-[150px]">
+        <h3 className="font-bold text-[16px] leading-tight line-clamp-2 max-w-[150px]">
           {title}
         </h3>
 

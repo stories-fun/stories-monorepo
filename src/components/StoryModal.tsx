@@ -71,7 +71,7 @@ export default function StoryModal({
                 <div className="flex items-center gap-2 mb-4">
                   <div className="bg-[#141414] p-1 rounded-lg flex items-center gap-2">
                     <Image
-                      src={`/${story.authorImage}`}
+                      src={`${story.authorImage}`}
                       alt={story.author}
                       width={32}
                       height={32}
