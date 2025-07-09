@@ -9,15 +9,14 @@ import { Read } from "@/components/Reading";
 
 // Sample data
 const stories = [
-  { image: "/lion.webp", title: "The Fairy Tale" },
-  { image: "/lion.webp", title: "Cars" },
-  { image: "/lion.webp", title: "Cars" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
-  { image: "/lion.webp", title: "The Butterfly Effect" },
+  { image: "/lion.webp", title: "The Fairy Tale", price: 10.0, change: 4.5 },
+  { image: "/lion.webp", title: "Cars", price: 15.0, change: 2.0 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
+  { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
 ];
 
 const transactions = [
