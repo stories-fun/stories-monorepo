@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { useRouter } from 'next/navigation';
+import { CustomCard } from "@/components/common/Card";
 import { toast } from 'sonner';
 import { 
   Search, 
@@ -22,7 +23,9 @@ import {
   Eye,
   AlertCircle,
   Shield,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  ArrowUpDown
 } from 'lucide-react';
 
 interface Story {
@@ -61,6 +64,8 @@ interface StoriesResponse {
 interface StoriesGalleryProps {
   onViewStory?: (story: Story) => void;
 }
+
+
 
 // Generate a random cover image based on story title
 const generateCoverImage = (title: string, index: number) => {
@@ -133,94 +138,24 @@ const StoryCard: React.FC<{
   return (
     <div 
       onClick={handleCardClick}
-      className="bg-[#1A1A1A] rounded-2xl overflow-hidden border border-[#2A2A2A] hover:border-[#3A3A3A] transition-all duration-300 hover:transform hover:scale-[1.02] group cursor-pointer"
     >
-      {/* Cover Image */}
-      <div 
-        className="h-48 relative overflow-hidden"
-        style={{ background: coverGradient }}
-      >
-        {/* Status Badge for Submitted Stories */}
-        {getStatusBadge()}
 
-        {/* Author Profile */}
-        <div className="absolute top-4 right-4 flex items-center gap-2">
-          <span className="text-white text-sm font-medium bg-black/20 backdrop-blur-sm px-2 py-1 rounded-full">
-            {story.author.username}
-          </span>
-          <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white text-xs font-bold">
-            {getInitials(story.author.username)}
-          </div>
-        </div>
-
-        {/* Price Badge */}
-        {story.price_tokens > 0 && (
-          <div className="absolute bottom-4 right-4 bg-yellow-500/90 backdrop-blur-sm text-black px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-            <Lock className="h-3 w-3" />
-            {story.price_tokens}
-          </div>
-        )}
-
-        {/* Abstract Design Elements */}
-        <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-tr-full"></div>
-        <div className="absolute top-1/2 left-1/2 w-16 h-16 bg-white/5 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
-        
-        {/* Floating Elements for Visual Interest */}
-        <div className="absolute top-8 left-8 w-3 h-3 bg-white/20 rounded-full"></div>
-        <div className="absolute bottom-8 right-8 w-2 h-2 bg-white/15 rounded-full"></div>
-        <div className="absolute bottom-16 left-16 w-1 h-1 bg-white/25 rounded-full"></div>
-
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <ExternalLink className="h-8 w-8 text-white" />
-          </div>
-        </div>
-      </div>
 
       {/* Card Content */}
-      <div className="p-6">
-        {/* Story Title */}
-        <h3 className="text-white font-bold text-lg mb-3 line-clamp-2 group-hover:text-[#00A3FF] transition-colors">
-          {story.title}
-        </h3>
+      <CustomCard
+  image={"/fallback.png"} // You can enhance this later
+  title={story.title.substring(0, 35)}
+  timeToRead={readingTime}
+  price={story.price_tokens}
+  change={4.5}
+  author={story.author.username}
+  authorImage={"/pfp.jpeg"}
+  contentSnippet={story.content.substring(0, )}
+  isOwner={isOwner}
+  onClick={handleReadClick}
+/>
 
-        {/* Content Preview */}
-        <p className="text-[#AAAAAA] text-sm mb-4 line-clamp-2 leading-relaxed">
-          {story.content.substring(0, 120)}...
-        </p>
 
-        {/* Rating and Reading Time */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 text-yellow-400 fill-current" />
-            <span className="text-white font-semibold">{rating.toFixed(1)}</span>
-            <span className="text-green-400 text-sm">• +4.5%</span>
-          </div>
-          <div className="flex items-center gap-1 text-[#666666] text-sm">
-            <Clock className="h-4 w-4" />
-            <span>{readingTime}</span>
-          </div>
-        </div>
-
-        {/* Read Button */}
-        <button
-          onClick={handleReadClick}
-          className={`w-full font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
-            story.status === 'submitted' && isOwner
-              ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
-              : 'bg-green-600 hover:bg-green-700 text-white group-hover:bg-green-500'
-          }`}
-        >
-          <Eye className="h-4 w-4" />
-          {story.status === 'submitted' && isOwner 
-            ? 'View Draft' 
-            : story.price_tokens > 0 
-              ? 'Read Story' 
-              : 'Read Free'
-          }
-        </button>
-      </div>
     </div>
   );
 };
@@ -245,9 +180,9 @@ const FilterBar: React.FC<{
   const getAvailableStatuses = () => {
     if (isConnected) {
       return [
-        { value: 'published', label: 'Published Stories' },
-        { value: 'approved', label: 'Approved Stories' },
-        { value: 'submitted', label: 'My Submitted Stories' }
+        { value: 'published', label: 'Published' },
+        { value: 'approved', label: 'Approved ' },
+        { value: 'submitted', label: 'Submitted ' }
       ];
     } else {
       return [
@@ -258,76 +193,105 @@ const FilterBar: React.FC<{
   };
 
   return (
-    <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#2A2A2A] mb-8">
-      <div className="flex flex-col lg:flex-row gap-4 items-center">
-        {/* Search */}
-        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-[#666666]" />
-            <input
-              type="text"
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder="Search stories..."
-              className="w-full pl-10 pr-4 py-3 bg-[#222222] border border-[#333333] rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF]"
-            />
-          </div>
-        </form>
-
-        {/* Status Filter */}
-        <select
-          aria-label="Filter by status"
-          value={currentFilters.status}
-          onChange={(e) => onFiltersChange({ ...currentFilters, status: e.target.value })}
-          className="px-4 py-3 bg-[#222222] border border-[#333333] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00A3FF]"
-        >
-          {getAvailableStatuses().map(status => (
-            <option key={status.value} value={status.value}>
-              {status.label}
-            </option>
-          ))}
-        </select>
-
-        {/* Sort By */}
-        <select
-          aria-label="Sort by"
-          value={currentFilters.sortBy}
-          onChange={(e) => onFiltersChange({ ...currentFilters, sortBy: e.target.value })}
-          className="px-4 py-3 bg-[#222222] border border-[#333333] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#00A3FF]"
-        >
-          <option value="created_at">Latest First</option>
-          <option value="title">Title A-Z</option>
-          <option value="price_tokens">Price</option>
-        </select>
-
-        {/* Sort Order */}
-        <button
-          onClick={() => onFiltersChange({ 
-            ...currentFilters, 
-            sortOrder: currentFilters.sortOrder === 'desc' ? 'asc' : 'desc' 
-          })}
-          className="px-4 py-3 bg-[#333333] hover:bg-[#3A3A3A] border border-[#444444] rounded-lg text-white transition-colors flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {currentFilters.sortOrder === 'desc' ? '↓' : '↑'}
-        </button>
+<div className="bg-[#141414] rounded-xl p-6 border border-[#333333] mb-8">
+  <div className="flex flex-col lg:flex-row gap-4 items-center">
+    {/* Search - Enhanced with floating label effect */}
+    <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-5 w-5 text-[#FFDE7A] transition-all duration-200" />
+        <input
+          type="text"
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+          placeholder=" "
+          className="w-full pl-10 pr-4 py-3 bg-[#1A1A1A] border border-[#333333] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#FFDE7A] focus:border-[#FFDE7A] peer transition-all duration-200"
+        />
+        <label className="absolute left-10 top-3 text-[#666666] pointer-events-none transition-all duration-200 peer-placeholder-shown:text-base peer-placeholder-shown:top-3 peer-focus:-top-2 peer-focus:text-xs peer-focus:text-[#FFDE7A] bg-[#1A1A1A] px-1">
+          Search stories...
+        </label>
       </div>
+    </form>
 
-      {/* Privacy Notice for Submitted Stories */}
-      {currentFilters.status === 'submitted' && (
-        <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-          <div className="flex items-start gap-2">
-            <Shield className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="text-yellow-400 text-sm font-medium">Privacy Notice</p>
-              <p className="text-yellow-300 text-xs mt-1">
-                You can only see your own submitted stories. Other users' submitted stories are private.
-              </p>
-            </div>
+    {/* Status Filter - Custom dropdown */}
+    <div className="relative group">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border border-[#333333] rounded-lg cursor-pointer hover:border-[#FFDE7A]/50 transition-all duration-200">
+        <span className="text-white">{currentFilters.status.replace('_', ' ')}</span>
+        <ChevronDown className="h-4 w-4 text-[#FFDE7A] transition-transform duration-200 group-hover:rotate-180" />
+      </div>
+      <div className="absolute z-10 mt-1 w-full bg-[#1A1A1A] border border-[#333333] rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+        {getAvailableStatuses().map(status => (
+          <div 
+            key={status.value}
+            onClick={() => onFiltersChange({ ...currentFilters, status: status.value })}
+            className={`px-4 py-2 text-white hover:bg-[#FFDE7A]/10 ${currentFilters.status === status.value ? 'text-[#FFDE7A]' : ''}`}
+          >
+            {status.label}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
+
+    {/* Sort By - Custom dropdown */}
+    <div className="relative group">
+      <div className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border border-[#333333] rounded-lg cursor-pointer hover:border-[#FFDE7A]/50 transition-all duration-200">
+        <span className="text-white">
+          {currentFilters.sortBy === 'created_at' ? 'Latest' : 
+           currentFilters.sortBy === 'title' ? 'Title' : 'Price'}
+        </span>
+        <ChevronDown className="h-4 w-4 text-[#FFDE7A] transition-transform duration-200 group-hover:rotate-180" />
+      </div>
+      <div className="absolute z-10 mt-1 w-full bg-[#1A1A1A] border border-[#333333] rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+        <div 
+          onClick={() => onFiltersChange({ ...currentFilters, sortBy: 'created_at' })}
+          className={`px-4 py-2 text-white hover:bg-[#FFDE7A]/10 ${currentFilters.sortBy === 'created_at' ? 'text-[#FFDE7A]' : ''}`}
+        >
+          Latest First
+        </div>
+        <div 
+          onClick={() => onFiltersChange({ ...currentFilters, sortBy: 'title' })}
+          className={`px-4 py-2 text-white hover:bg-[#FFDE7A]/10 ${currentFilters.sortBy === 'title' ? 'text-[#FFDE7A]' : ''}`}
+        >
+          Title A-Z
+        </div>
+        <div 
+          onClick={() => onFiltersChange({ ...currentFilters, sortBy: 'price_tokens' })}
+          className={`px-4 py-2 text-white hover:bg-[#FFDE7A]/10 ${currentFilters.sortBy === 'price_tokens' ? 'text-[#FFDE7A]' : ''}`}
+        >
+          Price
+        </div>
+      </div>
+    </div>
+
+    {/* Sort Order - Enhanced toggle */}
+    <button
+      onClick={() => onFiltersChange({ 
+        ...currentFilters, 
+        sortOrder: currentFilters.sortOrder === 'desc' ? 'asc' : 'desc' 
+      })}
+      className="flex items-center gap-2 px-4 py-3 bg-[#1A1A1A] border border-[#333333] rounded-lg hover:border-[#FFDE7A]/50 transition-all duration-200 group"
+    >
+      <ArrowUpDown className="h-4 w-4 text-[#FFDE7A] transition-transform duration-200 group-hover:scale-110" />
+      <span className="text-[#FFDE7A]">
+        {currentFilters.sortOrder === 'desc' ? 'Desc' : 'Asc'}
+      </span>
+    </button>
+  </div>
+
+  {/* Privacy Notice - Enhanced */}
+  {currentFilters.status === 'submitted' && (
+    <div className="mt-4 p-3 bg-[#FFDE7A]/10 border border-[#FFDE7A]/20 rounded-lg backdrop-blur-sm animate-pulse">
+      <div className="flex items-start gap-2">
+        <Shield className="h-4 w-4 text-[#FFDE7A] mt-0.5 flex-shrink-0" />
+        <div>
+          <p className="text-[#FFDE7A] text-sm font-medium">Privacy Notice</p>
+          <p className="text-[#FFDE7A]/80 text-xs mt-1">
+            You can only see your own submitted stories. Other users' submitted stories are private.
+          </p>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
   );
 };
 
@@ -555,9 +519,6 @@ export const StoriesGallery: React.FC<StoriesGalleryProps> = ({ onViewStory }) =
             : 'No stories found'
           }
         </p>
-        <div className="text-[#666666] text-sm">
-          {filters.status} • {filters.sortBy} {filters.sortOrder === 'desc' ? '↓' : '↑'}
-        </div>
       </div>
 
       {/* Stories Grid */}

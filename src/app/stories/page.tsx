@@ -22,6 +22,7 @@ import { StoriesGallery } from '@/components/stories/StoriesGallery';
 import CustomButton from '@/components/common/Button';
 import { StorySnippetModal } from './StorySnippetModal';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface Story {
   id: number;
@@ -215,48 +216,70 @@ export default function StoriesPage() {
   return (
     <div className="min-h-screen bg-[#141414] pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Stories Platform</h1>
+        <div className="text-center mb-8 justify-items-center">
+         <Image
+         src="/stories_logo_large.svg"
+         width={500}
+         height={100}
+         alt="Stories logo" />
           <p className="text-xl text-[#AAAAAA] max-w-2xl mx-auto">
-            Discover amazing stories, create your own, and connect with readers worldwide
+          Read, write, and inspire — where every story finds its reader.
           </p>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <div className="flex bg-[#222222] rounded-lg p-1 border border-[#333333]">
-            <button
-              onClick={() => setActiveTab('discover')}
-              className={`px-6 py-3 rounded-md transition-colors ${
-                activeTab === 'discover' ? 'bg-[#00A3FF] text-white' : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
-              }`}
-            >
-              <Search className="h-4 w-4 inline mr-2" />
-              Discover
-            </button>
-            {isConnected && (
-              <>
-                <button
-                  onClick={() => setActiveTab('create')}
-                  className={`px-6 py-3 rounded-md transition-colors ${
-                    activeTab === 'create' ? 'bg-[#00A3FF] text-white' : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
-                  }`}
-                >
-                  <Plus className="h-4 w-4 inline mr-2" />
-                  Create
-                </button>
-                <button
-                  onClick={() => setActiveTab('my-stories')}
-                  className={`px-6 py-3 rounded-md transition-colors ${
-                    activeTab === 'my-stories' ? 'bg-[#00A3FF] text-white' : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
-                  }`}
-                >
-                  <BookOpen className="h-4 w-4 inline mr-2" />
-                  My Stories
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+
+<div className="fixed top-1/2 -translate-y-1/2 right-8 z-10 flex flex-col gap-4 items-center">
+  <CustomButton
+    onClick={() => setActiveTab('discover')}
+    icon={Search}
+    text="Discover"
+    className={`w-40 justify-center ${activeTab === 'discover' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+  />
+  {isConnected && (
+    <>
+      <CustomButton
+        onClick={() => setActiveTab('create')}
+        icon={Plus}
+        text="Create"
+        className={`w-40 justify-center ${activeTab === 'create' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+      />
+      <CustomButton
+        onClick={() => setActiveTab('my-stories')}
+        icon={BookOpen}
+        text="Profile"
+        className={`w-40 justify-center ${activeTab === 'my-stories' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+      />
+    </>
+  )}
+</div>
+
+{/* Mobile Tab Navigation */}
+<div className="lg:hidden fixed bottom-0 left-0 w-full bg-[#141414] py-4 z-50">
+  <div className="flex gap-4 px-4 items-center justify-center">
+    <CustomButton
+      onClick={() => setActiveTab('discover')}
+      icon={Search}
+      text="Discover"
+      className={`w-24 h-12 justify-center ${activeTab === 'discover' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+    />
+    {isConnected && (
+      <>
+        <CustomButton
+          onClick={() => setActiveTab('create')}
+          icon={Plus}
+          text="Create"
+          className={`w-24 h-12 justify-center ${activeTab === 'create' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+        />
+        <CustomButton
+          onClick={() => setActiveTab('my-stories')}
+          icon={BookOpen}
+          text="Profile"
+          className={`w-24 h-12 justify-center ${activeTab === 'my-stories' ? 'bg-[#FFDE7A] text-[#141414]' : 'bg-[#222222] text-white'}`}
+        />
+      </>
+    )}
+  </div>
+</div>
 
         <div className="space-y-8">
           {activeTab === 'discover' && (
@@ -355,6 +378,7 @@ export default function StoriesPage() {
   </div>
 )}
       </div>
+      
     </div>
   );
 }
