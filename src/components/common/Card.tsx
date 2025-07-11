@@ -57,7 +57,7 @@ export function CustomCard({
   };
 
   return (
-    <div className="relative overflow-hidden bg-white shadow-lg max-w-[350px] transition-transform hover:scale-[1.02] hover:shadow-xl">
+    <div className="relative overflow-hidden bg-white max-w-[350px] transition-transform hover:scale-[1.02] hover:shadow-xl">
       {/* Main Image */}
       <div className="relative w-full h-64">
         <Image 
@@ -70,7 +70,7 @@ export function CustomCard({
       </div>
 
       {/* Content Section */}
-      <div className="bg-[#FFF6C9] text-[#141414] p-4 rounded-b-lg">
+      <div className="bg-[#FFF6C9] text-[#141414] p-4 ">
         {/* Author Info */}
         {author && authorImage && (
           <div className="flex items-center gap-2 mb-4 absolute right-0 top-0 bg-[#141414] py-2 px-3 rounded-bl-lg">

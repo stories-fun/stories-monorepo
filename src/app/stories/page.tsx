@@ -39,10 +39,11 @@ interface Story {
   price_tokens: number;
   status: string;
   created_at: string;
-  author: {
+ author: {
     id: number;
     username: string;
     wallet_address: string;
+    avatar_url?: string; // Optional, might not be present in all stories
   };
 }
 
@@ -430,9 +431,15 @@ export default function StoriesPage() {
     await fetchPurchases();
   };
 
+  const userStory = myStories.find(s => s.author.wallet_address === address);
+
   const UserProfile = {
-    username: "",
+    username: userStory?.author.username || "",
     walletAddress: address || "No user connected",
+    
+    avatarUrl: userStory?.author.avatar_url 
+      ? `https://ipfs.erebrus.io/ipfs/${userStory.author.avatar_url}` 
+      : "/pfp.jpeg"
   };
 
   const StoriesRead = {
@@ -691,9 +698,11 @@ export default function StoriesPage() {
                     </h1>
                   </div>
                   <Profile
-                    username={UserProfile.username}
-                    walletAddress={UserProfile.walletAddress}
-                  />
+  username={UserProfile.username}
+  walletAddress={UserProfile.walletAddress}
+  avatarUrl={UserProfile.avatarUrl}
+/>
+
 
                   {/* Reading Stats Section */}
                   <div className="sm:mt-0 sm:mb-0 mt-4 mb-6">

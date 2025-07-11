@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     // Query user by wallet address
     const { data: user, error: queryError } = await supabase
       .from('user')
-      .select('*')
+      .select('id, username, email, wallet_address, avatar_url, created_at')
       .eq('wallet_address', cleanWalletAddress)
       .single();
 
@@ -90,13 +90,14 @@ export async function GET(request: NextRequest) {
             username: user.username,
             email: user.email,
             wallet_address: user.wallet_address,
+            avatar_url: user.avatar_url,  // Add this line
             created_at: user.created_at
           }
         }
       },
       { status: 200 }
     );
-
+    
   } catch (error) {
     console.error('Unexpected error in user signin:', error);
     return NextResponse.json(

@@ -15,6 +15,7 @@ import remarkGfm from 'remark-gfm';
 interface Author {
   id: number;
   username: string;
+  avatar_url?: string;
   wallet_address: string;
   image_url?: string;
 }
@@ -51,6 +52,7 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
   const [requiredTokens, setRequiredTokens] = useState<number | null>(null);
   const { walletProvider: solanaWalletProvider } = useAppKitProvider<Provider>('solana');
   const balloonContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const [avatarError, setAvatarError] = useState(false);
 
   // Function to clean markdown for preview
   const cleanMarkdownPreview = (text: string) => {
@@ -70,6 +72,43 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
     return cleaned.trim().substring(0, 300) + (cleaned.length > 300 ? '...' : '');
   };
 
+
+  useEffect(() => {
+    if (story?.author?.avatar_url) {
+      console.log('Avatar Debug:', {
+        rawAvatarUrl: story.author.avatar_url,
+        constructedUrl: `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}`,
+        authorData: story.author,
+        isImageError: avatarError
+      });
+      
+      // // Test the image load
+      // const testImage = new Image();
+      // testImage.src = `https://ipfs.io/ipfs/${story.author.avatar_url}`;
+      // testImage.onload = () => console.log('IPFS image loads successfully');
+      // testImage.onerror = (e) => console.error('IPFS image failed to load', e);
+    }
+  }, [story, avatarError]);
+  
+  // Enhanced IPFS URL handling
+  const getIpfsUrl = (hash?: string) => {
+    if (!hash) return null;
+    
+    // Remove common prefixes
+    const cleanHash = hash
+      .replace(/^ipfs:\/\//, '')
+      .replace(/^https?:\/\/[^/]+\//, '')
+      .replace(/^\/ipfs\//, '');
+    
+    // Try multiple gateways with fallback
+    const gateways = [
+      `https://ipfs.erebrus.io/ipfs/${cleanHash}`,
+      `https://ipfs.io/ipfs/${cleanHash}`,
+      `https://cloudflare-ipfs.com/ipfs/${cleanHash}`
+    ];
+    
+    return gateways[0]; // Start with preferred gateway
+  };  
   // Fetch STORIES token price when component mounts
   useEffect(() => {
     const fetchStoriesPrice = async () => {
@@ -269,24 +308,49 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
             <h2 className="font-bold text-xl sm:text-2xl mb-4">
               {story.title}
             </h2>
+           
             
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-[#141414] p-1 rounded-lg flex items-center gap-2">
-                <Image
-                  src={story.author.image_url || '/pfp.jpeg'}
-                  alt={story.author.username}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-                <span className="text-sm font-semibold text-white">
-                  {story.author.username}
-                </span>
-              </div>
+            <div className="bg-[#141414] p-1 rounded-lg flex items-center gap-2">
+  {story.author.avatar_url ? (
+    <div className="relative">
+      <Image
+  src={getIpfsUrl(story.author.avatar_url) || "/pfp.jpeg"}
+  alt={story.author.username}
+  width={32}
+  height={32}
+  className="rounded-full"
+  onError={(e) => {
+    console.error('Image load error:', e);
+    setAvatarError(true);
+  }}
+  unoptimized={true}
+  priority={true} // Add this for important images
+/>
+      {avatarError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-red-500/20 rounded-full">
+          <span className="text-xs text-white">!</span>
+        </div>
+      )}
+    </div>
+  ) : (
+    <Image
+      src="/pfp.jpeg"
+      alt={story.author.username}
+      width={32}
+      height={32}
+      className="rounded-full"
+    />
+  )}
+  <span className="text-sm font-semibold text-white">
+    {story.author.username}
+  </span>
+</div>
               
               <span className="flex items-center text-sm ml-auto gap-1">
                 <Clock5 size={16} />
                 15 mins
+                
               </span>
               
               <button

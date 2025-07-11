@@ -7,6 +7,7 @@ interface SignupRequestBody {
   username: string;
   email: string;
   wallet_address: string;
+  avatar_url?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -121,7 +122,8 @@ export async function POST(request: NextRequest) {
       .insert({
         username: cleanUsername,
         email: cleanEmail,
-        wallet_address: cleanWalletAddress
+        wallet_address: cleanWalletAddress,
+        avatar_url: body.avatar_url || null
       })
       .select()
       .single();
@@ -158,6 +160,7 @@ export async function POST(request: NextRequest) {
             username: newUser.username,
             email: newUser.email,
             wallet_address: newUser.wallet_address,
+            avatar_url: newUser.avatar_url,
             created_at: newUser.created_at
           }
         }

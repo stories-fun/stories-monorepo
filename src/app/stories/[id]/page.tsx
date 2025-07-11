@@ -13,6 +13,7 @@ interface Author {
   id: number;
   username: string;
   wallet_address: string;
+  avatar_url?: string; // Optional, might not be present in all stories
 }
 
 interface ApprovedBy {
@@ -249,7 +250,7 @@ export default function SingleStoryPage() {
               price={story.price_tokens}
               change={4.5} // You might want to calculate this based on historical data
               author={story.author.username}
-              authorImage="/lady_image.svg" // You might want to add author image to your API
+              authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"} // You might want to add author image to your API
               storyContent={story.content}
               comments={comments}
               onNewComment={handleNewComment}

@@ -57,9 +57,9 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'S.', protected: false, isLogo: true },
-    { path: '/stories', label: 'Stories', protected: true },
-    { path: '/swap', label: 'Trade', protected: true },
+    { path: '/', label: 'S.', protected: false, isLogo: false },
+    { path: '/stories', label: 'Stories', protected: false },
+    { path: '/swap', label: 'Trade', protected: false },
     // Admin link - only show if user is admin
     ...(isAdmin ? [{ path: '/admin', label: 'Admin', protected: false, adminOnly: true }] : []),
   ];

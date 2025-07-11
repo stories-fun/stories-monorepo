@@ -35,10 +35,12 @@ interface Story {
   price_tokens: number;
   status: string;
   created_at: string;
+  
   author: {
     id: number;
     username: string;
     wallet_address: string;
+    avatar_url?: string;
   };
 }
 
@@ -149,14 +151,14 @@ const StoryCard: React.FC<{
   price={story.price_tokens}
   change={4.5}
   author={story.author.username}
-  authorImage={"/pfp.jpeg"}
-  contentSnippet={story.content.substring(0, 129)+ '...'}
+  authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"}
+  contentSnippet={story.content.substring(0, )}
   isOwner={isOwner}
   onClick={handleReadClick}
 />
 
 
-    </div>
+    </div>  
   );
 };
 
@@ -333,7 +335,7 @@ export const StoriesGallery: React.FC<StoriesGalleryProps> = ({ onViewStory }) =
   const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<{ id: number; username: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ id: number; username: string; avatar_url?: string } | null>(null);
   const [pagination, setPagination] = useState({
     total: 0,
     limit: 12,
@@ -365,7 +367,8 @@ export const StoriesGallery: React.FC<StoriesGalleryProps> = ({ onViewStory }) =
       if (result.success) {
         setUserInfo({
           id: result.data.user.id,
-          username: result.data.user.username
+          username: result.data.user.username,
+          avatar_url: result.data.user.avatar_url
         });
       } else {
         setUserInfo(null);

@@ -155,7 +155,8 @@ export async function GET(request: NextRequest) {
           user:author_id (
             id,
             username,
-            wallet_address
+            wallet_address,
+            avatar_url
           )
         `)
         .eq('status', 'submitted')
@@ -239,7 +240,8 @@ export async function GET(request: NextRequest) {
         user:author_id (
           id,
           username,
-          wallet_address
+          wallet_address,
+          avatar_url
         )
       `);
 

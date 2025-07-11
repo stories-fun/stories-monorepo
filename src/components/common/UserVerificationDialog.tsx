@@ -11,8 +11,11 @@ import {
   Send,
   CheckCircle2,
   Shield,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import axios from "axios";
+import Image from "next/image";
 
 interface UserVerificationDialogProps {
   isOpen: boolean;
@@ -34,6 +37,8 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+const [avatarHash, setAvatarHash] = useState<string>('');
 
   // OTP related state - FIXED: Changed to string and proper implementation
   const [otp, setOtp] = useState("");
@@ -64,6 +69,46 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
     }
     return () => clearTimeout(timer);
   }, [otpCountdown, isOtpSent]);
+
+
+  const uploadToIPFS = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    try {
+      const response = await axios.post('/api/ipfs', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.Hash;
+    } catch (error) {
+      console.error('IPFS upload error:', error);
+      toast.error('Failed to upload image to IPFS');
+      throw error;
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setAvatarPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+  
+      // Upload to IPFS
+      try {
+        const hash = await uploadToIPFS(file);
+        setAvatarHash(hash);
+        toast.success('Avatar image uploaded successfully');
+      } catch (error) {
+        toast.error('Failed to upload avatar image');
+      }
+    }
+  };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -190,7 +235,8 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
         },
         body: JSON.stringify({
           ...formData,
-          email_verified: true, // Include verification status
+          email_verified: true,
+          avatar_url: avatarHash  
         }),
       });
 
@@ -439,6 +485,45 @@ export const UserVerificationDialog: React.FC<UserVerificationDialogProps> = ({
                 This is automatically filled from your connected wallet
               </p>
             </div>
+
+            <div>
+  <label className="block text-sm font-medium text-[#AAAAAA] mb-2">
+    Profile Picture
+  </label>
+  <div className="flex items-center gap-4">
+    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[#333333]">
+      {avatarPreview ? (
+        <Image 
+          src={avatarPreview} 
+          alt="Avatar Preview" 
+          fill
+          className="object-cover"
+        />
+      ) : (
+        <div className="w-full h-full bg-[#222222] flex items-center justify-center">
+          <User className="h-8 w-8 text-[#666666]" />
+        </div>
+      )}
+    </div>
+    <label className="flex-1">
+      <div className="cursor-pointer bg-[#222222] hover:bg-[#2A2A2A] border border-[#333333] rounded-lg px-4 py-3 text-sm text-white transition-colors flex items-center gap-2">
+        <Upload className="h-4 w-4" />
+        {avatarHash ? 'Change Avatar' : 'Upload Avatar'}
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </label>
+  </div>
+  {avatarHash && (
+    <p className="text-xs text-green-400 mt-2">
+      Avatar uploaded successfully!
+    </p>
+  )}
+</div>
           </form>
         </div>
 
