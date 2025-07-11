@@ -150,7 +150,7 @@ const StoryCard: React.FC<{
   change={4.5}
   author={story.author.username}
   authorImage={"/pfp.jpeg"}
-  contentSnippet={story.content.substring(0, )}
+  contentSnippet={story.content.substring(0, 129)+ '...'}
   isOwner={isOwner}
   onClick={handleReadClick}
 />

@@ -9,6 +9,8 @@ import type { Provider } from "@reown/appkit-adapter-solana/react";
 import Image from 'next/image';
 import { balloons } from 'balloons-js';
 import CustomButton from '@/components/common/Button';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Author {
   id: number;
@@ -49,6 +51,24 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
   const [requiredTokens, setRequiredTokens] = useState<number | null>(null);
   const { walletProvider: solanaWalletProvider } = useAppKitProvider<Provider>('solana');
   const balloonContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Function to clean markdown for preview
+  const cleanMarkdownPreview = (text: string) => {
+    // Remove markdown headers
+    let cleaned = text.replace(/^#+\s+/gm, '');
+    // Remove bold/italic markers
+    cleaned = cleaned.replace(/\*\*([^*]+)\*\*/g, '$1');
+    cleaned = cleaned.replace(/\*([^*]+)\*/g, '$1');
+    // Remove image/video markdown
+    cleaned = cleaned.replace(/!\[.*?\]\(.*?\)/g, '');
+    cleaned = cleaned.replace(/<video.*?<\/video>/g, '');
+    // Remove blockquotes
+    cleaned = cleaned.replace(/^>\s+/gm, '');
+    // Remove links
+    cleaned = cleaned.replace(/\[(.*?)\]\(.*?\)/g, '$1');
+    // Trim and get first 300 characters
+    return cleaned.trim().substring(0, 300) + (cleaned.length > 300 ? '...' : '');
+  };
 
   // Fetch STORIES token price when component mounts
   useEffect(() => {
@@ -278,29 +298,48 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
               </button>
             </div>
 
-            <p className="text-sm leading-relaxed mb-6 line-clamp-6">
-              {story.content}
-            </p>
+            {/* Enhanced Markdown Preview */}
+            <div className="mb-6 max-h-[200px] overflow-y-auto">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  // Strip out all complex markdown for the preview
+                  h1: ({node, ...props}) => <span className="font-bold text-lg" {...props} />,
+                  h2: ({node, ...props}) => <span className="font-bold" {...props} />,
+                  h3: ({node, ...props}) => <span className="font-bold" {...props} />,
+                  p: ({node, ...props}) => <p className="text-sm text-gray-700 mb-2 leading-relaxed" {...props} />,
+                  img: () => null,
+                  video: () => null,
+                  a: ({node, ...props}) => <span className="text-blue-600" {...props} />,
+                  strong: ({node, ...props}) => <span className="font-semibold" {...props} />,
+                  em: ({node, ...props}) => <span className="italic" {...props} />,
+                  blockquote: () => null,
+                  code: () => null,
+                }}
+              >
+                {cleanMarkdownPreview(story.content)}
+              </ReactMarkdown>
+            </div>
 
             <div className="flex justify-center">
-  <CustomButton
-    text={
-      isCheckingPurchase ? (
-        <span className="flex items-center justify-center gap-2 ">
-          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin "></span>
-          Checking...
-        </span>
-      ) : (
-        'Read full story'
-      )
-    }
-    onClick={handleReadFullStory}
-    disabled={isCheckingPurchase || !requiredTokens}
-    className={`w-full max-w-xs text-sm py-2 px-5 ${
-      isCheckingPurchase ? 'opacity-75' : ''
-    }`}
-  />
-</div>
+              <CustomButton
+                text={
+                  isCheckingPurchase ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Checking...
+                    </span>
+                  ) : (
+                    'Read full story'
+                  )
+                }
+                onClick={handleReadFullStory}
+                disabled={isCheckingPurchase || !requiredTokens}
+                className={`w-full max-w-xs text-sm py-2 px-5 ${
+                  isCheckingPurchase ? 'opacity-75' : ''
+                }`}
+              />
+            </div>
           </div>
         </div>
 
@@ -346,79 +385,79 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
       {/* Payment Modal */}
       {showPaymentModal && requiredTokens && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
-  <div className="relative bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg rounded-xl shadow-2xl border-2 border-[#141414]">
-    {/* Close button (top-right) */}
-    <button
-      onClick={() => setShowPaymentModal(false)}
-      className="absolute top-4 right-4 p-1 rounded-full hover:bg-[#FFDE7A]/50 transition-colors"
-    >
-      <X className="h-5 w-5" />
-    </button>
+          <div className="relative bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg rounded-xl shadow-2xl border-2 border-[#141414]">
+            {/* Close button (top-right) */}
+            <button
+              onClick={() => setShowPaymentModal(false)}
+              className="absolute top-4 right-4 p-1 rounded-full hover:bg-[#FFDE7A]/50 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
 
-    {/* Header with icon */}
-    <div className="flex items-center gap-3 mb-4">
-      <Gift className="h-6 w-6 text-[#141414]" />
-      <h3 className="text-2xl font-bold">Unlock This Story</h3>
-    </div>
+            {/* Header with icon */}
+            <div className="flex items-center gap-3 mb-4">
+              <Gift className="h-6 w-6 text-[#141414]" />
+              <h3 className="text-2xl font-bold">Unlock This Story</h3>
+            </div>
 
-    {/* Price details */}
-    <div className="mb-6 p-4 bg-[#FFDE7A]/30 rounded-lg border border-[#FFDE7A]/50">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium">Current Rate:</span>
-        <span className="font-mono font-bold">${storiesPrice?.toFixed(4)} per STORY</span>
-      </div>
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-medium">You Pay:</span>
-        <div className="text-right">
-          <p className="font-mono font-bold text-lg">{requiredTokens.toFixed(4)} STORIES</p>
-          <p className="text-xs">≈ $9.00 USD</p>
+            {/* Price details */}
+            <div className="mb-6 p-4 bg-[#FFDE7A]/30 rounded-lg border border-[#FFDE7A]/50">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">Current Rate:</span>
+                <span className="font-mono font-bold">${storiesPrice?.toFixed(4)} per STORY</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">You Pay:</span>
+                <div className="text-right">
+                  <p className="font-mono font-bold text-lg">{requiredTokens.toFixed(4)} STORIES</p>
+                  <p className="text-xs">≈ $9.00 USD</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Market notice */}
+            <div className="flex items-start gap-2 mb-6 text-xs text-[#141414]/80">
+              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <p>Price adjusts automatically based on current market value of STORIES token</p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="px-6 py-3 border-2 border-[#141414] rounded-lg hover:bg-[#FFDE7A]/50 active:bg-[#FFDE7A]/70 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className={`px-6 py-3 bg-[#141414] text-[#FFEEBA] rounded-lg border-2 border-[#141414] hover:bg-[#2a2a2a] active:bg-[#1a1a1a] transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
+                  isProcessingPayment ? 'opacity-80' : ''
+                }`}
+              >
+                {isProcessingPayment ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="inline-block w-5 h-5 border-2 border-[#FFEEBA] border-t-transparent rounded-full animate-spin"></span>
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <LockOpen className="h-5 w-5" />
+                    Confirm Purchase
+                  </span>
+                )}
+              </button>
+            </div>
+
+            {/* Loading state decoration (only visible during processing) */}
+            {isProcessingPayment && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#141414]/10 overflow-hidden">
+                <div className="h-full w-full bg-[#141414] animate-[pulse_1.5s_infinite]" />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
-
-    {/* Market notice */}
-    <div className="flex items-start gap-2 mb-6 text-xs text-[#141414]/80">
-      <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-      <p>Price adjusts automatically based on current market value of STORIES token</p>
-    </div>
-
-    {/* Action buttons */}
-    <div className="flex justify-end gap-3">
-      <button
-        onClick={() => setShowPaymentModal(false)}
-        className="px-6 py-3 border-2 border-[#141414] rounded-lg hover:bg-[#FFDE7A]/50 active:bg-[#FFDE7A]/70 transition-colors font-medium"
-      >
-        Cancel
-      </button>
-      <button
-        onClick={handlePayment}
-        disabled={isProcessingPayment}
-        className={`px-6 py-3 bg-[#141414] text-[#FFEEBA] rounded-lg border-2 border-[#141414] hover:bg-[#2a2a2a] active:bg-[#1a1a1a] transition-colors font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
-          isProcessingPayment ? 'opacity-80' : ''
-        }`}
-      >
-        {isProcessingPayment ? (
-          <span className="flex items-center justify-center gap-2">
-            <span className="inline-block w-5 h-5 border-2 border-[#FFEEBA] border-t-transparent rounded-full animate-spin"></span>
-            Processing...
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            <LockOpen className="h-5 w-5" />
-            Confirm Purchase
-          </span>
-        )}
-      </button>
-    </div>
-
-    {/* Loading state decoration (only visible during processing) */}
-    {isProcessingPayment && (
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#141414]/10 overflow-hidden">
-        <div className="h-full w-full bg-[#141414] animate-[pulse_1.5s_infinite]" />
-      </div>
-    )}
-  </div>
-</div>
       )}
     </div>
   );

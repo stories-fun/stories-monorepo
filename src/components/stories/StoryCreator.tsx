@@ -13,9 +13,22 @@ import {
   AlertCircle,
   Check,
   Eye,
-  Lock
+  Lock,
+  Type,
+  Heading1,
+  Heading2,
+  Image as ImageIcon,
+  Video,
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Quote
 } from 'lucide-react';
 import CustomButton from '@/components/common/Button';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 interface StoryFormData {
   title: string;
@@ -68,7 +81,36 @@ export const StoryCreator: React.FC<{
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<StoryFormErrors>({});
   const [showPreview, setShowPreview] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
 
+  // Formatting functions
+  const insertFormatting = (prefix: string, suffix: string = '', placeholder: string = '') => {
+    const textarea = document.getElementById('story-content') as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const selectedText = formData.content.substring(startPos, endPos);
+    const beforeText = formData.content.substring(0, startPos);
+    const afterText = formData.content.substring(endPos);
+
+    let newText;
+    if (selectedText) {
+      newText = `${beforeText}${prefix}${selectedText}${suffix}${afterText}`;
+      setCursorPosition(startPos + prefix.length + selectedText.length + suffix.length);
+    } else {
+      newText = `${beforeText}${prefix}${placeholder}${suffix}${afterText}`;
+      setCursorPosition(startPos + prefix.length + placeholder.length + suffix.length);
+    }
+
+    setFormData(prev => ({ ...prev, content: newText }));
+    
+    // Focus back on textarea after a small delay
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(cursorPosition, cursorPosition);
+    }, 10);
+  };
   // Validation functions
   const validateForm = (): boolean => {
     const newErrors: StoryFormErrors = {};
@@ -189,30 +231,45 @@ export const StoryCreator: React.FC<{
         </button>
       </div>
       
-      <div className="space-y-4">
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-lg font-bold text-white">{formData.title || 'Untitled Story'}</h4>
-            {formData.price_tokens > 0 && (
-              <div className="flex items-center gap-1 text-yellow-400">
-                <Lock className="h-4 w-4" />
-                <span className="text-sm">{formData.price_tokens} STORIES</span>
+      <div className="prose prose-invert max-w-none">
+        <ReactMarkdown 
+          rehypePlugins={[rehypeRaw, remarkGfm]}
+          components={{
+            img: ({node, ...props}) => (
+              <div className="my-4">
+                <img {...props} className="rounded-lg max-w-full h-auto mx-auto" />
+                {props.title && (
+                  <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
+                )}
               </div>
-            )}
-          </div>
-          <div className="text-[#AAAAAA] text-sm mb-4">
-            Preview • {formData.content.length} characters
-          </div>
-        </div>
-        
-        <div className="prose prose-invert max-w-none">
-          <div className="text-white whitespace-pre-wrap leading-relaxed">
-            {formData.content || 'Your story content will appear here...'}
-          </div>
-        </div>
+            ),
+            video: ({node, ...props}) => (
+              <div className="my-4">
+                <video {...props} className="rounded-lg w-full" controls />
+                {props.title && (
+                  <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
+                )}
+              </div>
+            ),
+            h1: ({node, ...props}) => <h1 className="text-3xl font-bold my-4" {...props} />,
+            h2: ({node, ...props}) => <h2 className="text-2xl font-bold my-3" {...props} />,
+            h3: ({node, ...props}) => <h3 className="text-xl font-bold my-2" {...props} />,
+            p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
+            blockquote: ({node, ...props}) => (
+              <blockquote className="border-l-4 border-[#00A3FF] pl-4 py-2 my-4 italic" {...props} />
+            ),
+            ul: ({node, ...props}) => <ul className="list-disc pl-5 my-3" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-3" {...props} />,
+            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+            em: ({node, ...props}) => <em className="italic" {...props} />,
+          }}
+        >
+          {formData.content || 'Your story content will appear here...'}
+        </ReactMarkdown>
       </div>
     </div>
   );
+
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -264,11 +321,12 @@ export const StoryCreator: React.FC<{
       {/* Content Area */}
       {isConnected && (
         <>
-          {showPreview ? (
+              {showPreview ? (
             <StoryPreview />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Title Field */}
+              {/* Title Field remains the same */}
+
               <div className="bg-[#222222] rounded-xl p-6 border border-[#333333]">
                 <label className="block text-sm font-medium text-[#AAAAAA] mb-3">
                   <FileText className="h-4 w-4 inline mr-2" />
@@ -295,19 +353,97 @@ export const StoryCreator: React.FC<{
                 </div>
               </div>
 
-              {/* Content Field */}
+              {/* Content Field with formatting toolbar */}
               <div className="bg-[#222222] rounded-xl p-6 border border-[#333333]">
                 <label className="block text-sm font-medium text-[#AAAAAA] mb-3">
                   <PenTool className="h-4 w-4 inline mr-2" />
-                  Story Content
+                  Story Content (Markdown supported)
                 </label>
+                
+                {/* Formatting Toolbar */}
+                <div className="flex flex-wrap gap-2 mb-3 bg-[#1A1A1A] p-2 rounded-lg">
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('# ', '', 'Main Heading')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Heading 1"
+                  >
+                    <Heading1 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('## ', '', 'Subheading')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Heading 2"
+                  >
+                    <Heading2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('**', '**', 'bold text')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Bold"
+                  >
+                    <Bold className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('*', '*', 'italic text')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Italic"
+                  >
+                    <Italic className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('> ', '', 'Blockquote')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Quote"
+                  >
+                    <Quote className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('- ', '', 'List item')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Unordered List"
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('1. ', '', 'List item')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Ordered List"
+                  >
+                    <ListOrdered className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('![', `](image-url "optional caption")`, 'Image description')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Image"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => insertFormatting('<video src="', `" controls title="optional title"></video>`, 'video-url')}
+                    className="p-2 hover:bg-[#333333] rounded"
+                    title="Video"
+                  >
+                    <Video className="h-4 w-4" />
+                  </button>
+                </div>
+
                 <textarea
+                  id="story-content"
                   value={formData.content}
                   onChange={(e) => handleInputChange('content', e.target.value)}
                   className={`w-full px-4 py-3 bg-[#1A1A1A] border rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF] resize-vertical transition-colors ${
                     errors.content ? 'border-red-500' : 'border-[#333333]'
                   }`}
-                  placeholder="Tell your story... Be creative and authentic!"
+                  placeholder={`# Welcome to your story!\n\nStart writing here... Use markdown for formatting:\n\n## Subheadings\n**Bold text** *Italic text*\n\n![Image description](image-url "optional caption")\n\n<video src="video-url" controls></video>\n\n- List items\n1. Numbered items\n\n> Blockquotes`}
                   rows={12}
                   maxLength={50000}
                   disabled={isSubmitting}

@@ -3,6 +3,9 @@
 import Image from "next/image";
 import { Clock5, ArrowUpCircle } from "lucide-react";
 import { useState, createContext, useContext } from "react";
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 type CommentProps = {
   userImage: string;
@@ -216,18 +219,66 @@ export function SingleStory({
 
         {/* HTML Story Content */}
         {storyContent && (
-          <div
-            className="mt-4 mb-5 space-y-4 pb-10
-      [&_h1]:text-[28px] [&_h1]:leading-[36px] [&_h1]:font-extrabold [&_h1]:mb-2
-      [&_h2]:text-[22px] [&_h2]:leading-[30px] [&_h2]:font-bold [&_h2]:mt-6 [&_h2]:mb-2
-      [&_p]:text-[16px] [&_p]:leading-[24px] [&_p]:${textColor} [&_p]:mb-2
-      [&_em]:italic [&_em]:${borderColor} [&_em]:border-l-4 [&_em]:${borderColor} [&_em]:pl-4 [&_em]:block [&_em]:py-2
-      [&_strong]:font-semibold
-      [&_img]:rounded-xl [&_img]:max-w-full [&_img]:h-auto [&_img]:mx-auto [&_img]:my-4
-      [&_video]:rounded-lg [&_video]:w-full [&_video]:h-auto [&_video]:my-4
-      [&_iframe]:w-full [&_iframe]:aspect-video [&_iframe]:rounded-lg [&_iframe]:my-4"
-            dangerouslySetInnerHTML={{ __html: storyContent }}
-          />
+          <div className="mt-4 mb-5 space-y-4 pb-10">
+            <ReactMarkdown 
+              rehypePlugins={[rehypeRaw, remarkGfm]}
+              components={{
+                h1: ({node, ...props}) => <h1 className="text-3xl font-bold my-6" {...props} />,
+                h2: ({node, ...props}) => <h2 className="text-2xl font-bold my-5" {...props} />,
+                h3: ({node, ...props}) => <h3 className="text-xl font-bold my-4" {...props} />,
+                h4: ({node, ...props}) => <h4 className="text-lg font-bold my-3" {...props} />,
+                p: ({node, ...props}) => <p className="text-base leading-relaxed my-3" {...props} />,
+                img: ({node, ...props}) => (
+                  <div className="my-6">
+                    <img 
+                      {...props} 
+                      className="rounded-lg max-w-full h-auto mx-auto" 
+                      alt={props.alt || 'Story image'}
+                    />
+                    {props.title && (
+                      <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
+                    )}
+                  </div>
+                ),
+                video: ({node, ...props}) => (
+                  <div className="my-6">
+                    <video 
+                      {...props} 
+                      className="rounded-lg w-full" 
+                      controls 
+                    />
+                    {props.title && (
+                      <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
+                    )}
+                  </div>
+                ),
+                blockquote: ({node, ...props}) => (
+                  <blockquote className="border-l-4 border-[#00A3FF] pl-4 py-2 my-4 italic bg-[#1A1A1A]/50" {...props} />
+                ),
+                ul: ({node, ...props}) => <ul className="list-disc pl-5 my-3 space-y-1" {...props} />,
+                ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-3 space-y-1" {...props} />,
+                li: ({node, ...props}) => <li className="pl-2" {...props} />,
+                strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                em: ({node, ...props}) => <em className="italic" {...props} />,
+                a: ({node, ...props}) => (
+                  <a 
+                    {...props} 
+                    className="text-[#00A3FF] hover:underline" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  />
+                ),
+                code: ({node, ...props}) => (
+                  <code className="bg-[#1A1A1A] px-2 py-1 rounded text-sm font-mono" {...props} />
+                ),
+                pre: ({node, ...props}) => (
+                  <pre className="bg-[#1A1A1A] p-4 rounded-lg overflow-x-auto my-4" {...props} />
+                ),
+              }}
+            >
+              {storyContent}
+            </ReactMarkdown>
+          </div>
         )}
 
         {/* Add Comment */}
