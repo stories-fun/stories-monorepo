@@ -7,7 +7,8 @@ import { AppKit } from "@/context/appkit";
 import Navbar from "@/components/common/navbar";
 import Footer from "@/components/common/Footer";
 import { Toaster } from "sonner";
-import AppKitThemeCustomizer from "@/components/AppKitThemeCustomizer"; // 👈 import your theme customizer
+import AppKitThemeCustomizer from "@/components/AppKitThemeCustomizer";
+import ProrectedRoute from "@/components/ProtectedRoute";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,7 +42,9 @@ export default function RootLayout({
 
             <Navbar />
             <main className="flex-grow min-h-[calc(100vh-200px)]">
-              {children}
+              <ProrectedRoute>
+                {children}
+              </ProrectedRoute>
             </main>
             <Footer />
             <Toaster richColors />
