@@ -1,5 +1,5 @@
 // src/app/api/stories/[id]/route.ts
-// Simplified version with better error handling and step-by-step data fetching
+// Enhanced version with purchase verification and access control
 
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -7,6 +7,112 @@ interface RouteParams {
   params: Promise<{
     id: string;
   }>;
+}
+
+interface PurchaseRecord {
+  purchase_id: number;
+  wallet_address: string;
+  story_id: number;
+  status: string;
+  purchased_at: string;
+}
+
+interface AccessValidationResult {
+  canAccess: boolean;
+  reason?: string;
+  accessType: 'free' | 'purchased' | 'owner' | 'admin' | 'denied';
+}
+
+// Helper function to validate story purchase
+async function validateStoryAccess(
+  supabase: any,
+  storyId: number,
+  story: any,
+  requestingWalletAddress?: string,
+  adminWalletAddress?: string
+): Promise<AccessValidationResult> {
+  
+  // 1. Check if story is free (price_tokens = 0)
+  if (story.price_tokens === 0) {
+    return {
+      canAccess: true,
+      accessType: 'free',
+      reason: 'Story is free to read'
+    };
+  }
+
+  // 2. Check if requesting user is admin
+  if (adminWalletAddress) {
+    try {
+      const { data: admin, error: adminError } = await supabase
+        .from('admin')
+        .select('admin_id, admin_name')
+        .eq('wallet_address', adminWalletAddress)
+        .single();
+
+      if (!adminError && admin) {
+        console.log('Admin access granted to:', admin.admin_name);
+        return {
+          canAccess: true,
+          accessType: 'admin',
+          reason: 'Admin access granted'
+        };
+      }
+    } catch (error) {
+      console.warn('Admin check failed:', error);
+    }
+  }
+
+  // 3. Check if requesting user is the story owner
+  if (requestingWalletAddress) {
+    try {
+      const { data: author, error: authorError } = await supabase
+        .from('user')
+        .select('id, wallet_address')
+        .eq('id', story.author_id)
+        .single();
+
+      if (!authorError && author && author.wallet_address === requestingWalletAddress) {
+        return {
+          canAccess: true,
+          accessType: 'owner',
+          reason: 'User is the story author'
+        };
+      }
+    } catch (error) {
+      console.warn('Author check failed:', error);
+    }
+  }
+
+  // 4. Check if user has purchased the story
+  if (requestingWalletAddress) {
+    try {
+      const { data: purchase, error: purchaseError } = await supabase
+        .from('story_purchases')
+        .select('*')
+        .eq('story_id', storyId)
+        .eq('wallet_address', requestingWalletAddress)
+        .eq('status', 'completed')
+        .single();
+
+      if (!purchaseError && purchase) {
+        return {
+          canAccess: true,
+          accessType: 'purchased',
+          reason: 'User has purchased this story'
+        };
+      }
+    } catch (error) {
+      console.warn('Purchase check failed:', error);
+    }
+  }
+
+  // 5. If none of the above conditions are met, deny access
+  return {
+    canAccess: false,
+    accessType: 'denied',
+    reason: 'Story requires purchase to access'
+  };
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -82,7 +188,51 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Step 2: Fetch the author information
+    // Step 2: Validate access permissions
+    const accessValidation = await validateStoryAccess(
+      supabase,
+      storyId,
+      story,
+      requestingWalletAddress ?? undefined,
+      adminWalletAddress ?? undefined
+    );
+
+    console.log('Access validation result:', accessValidation);
+
+    if (!accessValidation.canAccess) {
+      // Return story metadata but not content for paid stories
+      const { data: author } = await supabase
+        .from('user')
+        .select('id, username, wallet_address')
+        .eq('id', story.author_id)
+        .single();
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Payment required',
+          message: accessValidation.reason || 'This story requires purchase to access',
+          story_preview: {
+            id: story.id,
+            title: story.title,
+            price_tokens: story.price_tokens,
+            status: story.status,
+            created_at: story.created_at,
+            author: author ? {
+              id: author.id,
+              username: author.username,
+              wallet_address: author.wallet_address
+            } : null,
+            content_preview: story.content.substring(0, 200) + '...'
+          },
+          purchase_required: true,
+          access_type: accessValidation.accessType
+        },
+        { status: 402 } // Payment Required
+      );
+    }
+
+    // Step 3: Fetch the author information
     console.log('Fetching author with ID:', story.author_id);
     const { data: author, error: authorError } = await supabase
       .from('user')
@@ -102,83 +252,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Step 3: Check if requesting user is admin
-    let isAdmin = false;
-    if (adminWalletAddress) {
-      try {
-        const { data: admin, error: adminError } = await supabase
-          .from('admin')
-          .select('admin_id, admin_name')
-          .eq('wallet_address', adminWalletAddress)
-          .single();
-
-        if (!adminError && admin) {
-          isAdmin = true;
-          console.log('Admin access granted to:', admin.admin_name);
-        }
-      } catch (error) {
-        console.warn('Admin check failed:', error);
-      }
-    }
-
-    // Step 4: Check if requesting user is the author
-    let isOwner = false;
-    let requestingUser = null;
-    if (requestingWalletAddress) {
-      try {
-        const { data: user, error: userError } = await supabase
-          .from('user')
-          .select('id, username, wallet_address')
-          .eq('wallet_address', requestingWalletAddress)
-          .single();
-
-        if (!userError && user) {
-          requestingUser = user;
-          isOwner = user.id === story.author_id;
-          console.log('User access check:', { userId: user.id, authorId: story.author_id, isOwner });
-        }
-      } catch (error) {
-        console.warn('User check failed:', error);
-      }
-    }
-
-    // Step 5: Check access permissions
-    const isPublishedOrApproved = story.status === 'published' || story.status === 'approved';
-    const isSubmittedAndOwner = story.status === 'submitted' && isOwner;
-    const canAccess = isAdmin || isPublishedOrApproved || isSubmittedAndOwner;
-
-    console.log('Access check:', {
-      storyStatus: story.status,
-      isAdmin,
-      isOwner,
-      isPublishedOrApproved,
-      isSubmittedAndOwner,
-      canAccess
-    });
-
-    if (!canAccess) {
-      if (story.status === 'submitted') {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Access denied',
-            message: 'You can only view your own submitted stories'
-          },
-          { status: 403 }
-        );
-      }
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Access denied',
-          message: 'This story is not available for public viewing'
-        },
-        { status: 403 }
-      );
-    }
-
-    // Step 6: Get admin approval info if available
+    // Step 4: Get admin approval info if available
     let approvedBy = null;
     if (story.approve_by) {
       try {
@@ -199,11 +273,36 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Step 7: Build response
+    // Step 5: Get purchase information if user has purchased
+    let purchaseInfo = null;
+    if (requestingWalletAddress && accessValidation.accessType === 'purchased') {
+      try {
+        const { data: purchase } = await supabase
+          .from('story_purchases')
+          .select('purchase_id, purchased_at, price_tokens, transaction_hash')
+          .eq('story_id', storyId)
+          .eq('wallet_address', requestingWalletAddress)
+          .eq('status', 'completed')
+          .single();
+        
+        if (purchase) {
+          purchaseInfo = {
+            purchase_id: purchase.purchase_id,
+            purchased_at: purchase.purchased_at,
+            price_paid: purchase.price_tokens,
+            transaction_hash: purchase.transaction_hash
+          };
+        }
+      } catch (purchaseErr) {
+        console.warn('Could not fetch purchase info:', purchaseErr);
+      }
+    }
+
+    // Step 6: Build response with full story content
     const responseStory = {
       id: story.id,
       title: story.title,
-      content: story.content,
+      content: story.content, // Full content since access is granted
       price_tokens: story.price_tokens,
       status: story.status,
       created_at: story.created_at,
@@ -212,10 +311,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         username: author.username,
         wallet_address: author.wallet_address
       },
-      approved_by: approvedBy
+      approved_by: approvedBy,
+      access_info: {
+        access_type: accessValidation.accessType,
+        access_reason: accessValidation.reason,
+        purchase_info: purchaseInfo
+      }
     };
 
-    console.log('Successfully fetched story:', story.title);
+    console.log(`Successfully fetched story: ${story.title} (Access: ${accessValidation.accessType})`);
 
     return NextResponse.json(
       {
@@ -242,7 +346,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// Handle PATCH requests for admin actions
+// Enhanced PATCH handler with purchase verification
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -297,7 +401,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Verify admin
+    // Verify admin (same as before)
     const { data: admin, error: adminError } = await supabase
       .from('admin')
       .select('admin_id, admin_name')
