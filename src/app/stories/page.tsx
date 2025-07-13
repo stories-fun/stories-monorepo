@@ -732,14 +732,10 @@ export default function StoriesPage() {
         </div>
 
         {showSnippetModal && selectedStory && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center">
-            <div className="max-w-2xl w-full bg-[#1A1A1A] p-6 rounded-lg relative">
-              <button
-                onClick={() => setShowSnippetModal(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-white"
-              >
-                ×
-              </button>
+         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center">
+         
+       
+           
 
               <StorySnippetModal
                 isOpen={showSnippetModal}
@@ -751,7 +747,7 @@ export default function StoriesPage() {
                 }}
               />
             </div>
-          </div>
+         
         )}
       </div>
     </div>
