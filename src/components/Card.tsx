@@ -4,11 +4,9 @@ import Image from "next/image";
 import CustomButton from "./Button";
 import { Clock5 } from "lucide-react";
 import {
-  useEffect,
   useLayoutEffect,
   useRef,
   useState,
-  type MutableRefObject,
 } from "react";
 
 interface CustomCardProps {
@@ -101,7 +99,7 @@ export function CustomCard({
       </div>
 
       {/* Content Section */}
-      <div className="bg-[#FFF6C9] text-[#141414] p-4 rounded-lg flex flex-col flex-1">
+      <div className="bg-[#FFF6C9] text-[#141414] p-4 flex flex-col flex-1">
         {/* Title and Time */}
         <div className="flex justify-between items-start mb-3">
           <h3 className="font-bold text-xl leading-tight flex-1 mr-2">

@@ -9,7 +9,7 @@ import { Read } from "@/components/Reading";
 
 // Sample data
 const stories = [
-  { image: "/lion.webp", title: "The Fairy Tale", price: 10.0, change: 4.5 },
+  { image: "/lion.webp", title: "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power", price: 10.0, change: 4.5 },
   { image: "/lion.webp", title: "Cars", price: 15.0, change: 2.0 },
   { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
   { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
@@ -21,7 +21,7 @@ const stories = [
 
 const transactions = [
   {
-    storyTitle: "The Fairy Tale",
+    storyTitle: "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power",
     price: "$10.00",
     date: "2023-01-01",
     txns: "https://example.com/txn/1",

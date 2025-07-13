@@ -15,21 +15,21 @@ export function MiniCard({ image, title, price, change }: MiniCardProps) {
   const changeSymbol = isPositive ? "+" : "";
 
   return (
-    <div className="relative overflow-hidden text-white sm:max-w-[270px] w-full h-[220px] flex flex-col bg-black">
+    <div className="relative overflow-hidden text-white sm:max-w-[270px] w-full h-full flex flex-col bg-black">
       {/* Image section */}
       <div className="relative w-full h-[140px]">
         <Image src={image} alt={title} fill className="object-cover" />
       </div>
 
-      {/* Content section */}
-      <div className="bg-[#FFF6C9] text-[#141414] px-2 py-2 flex justify-between items-center h-[80px]">
-        {/* Title */}
-        <h3 className="font-bold text-[16px] leading-tight line-clamp-2 max-w-[150px]">
+      {/* Content section - now flexible height */}
+      <div className="bg-[#FFF6C9] text-[#141414] px-2 py-2 flex justify-between items-center flex-row flex-1">
+        {/* Title - no line clamping, flexible width */}
+        <h3 className="font-bold text-[16px] leading-tight flex-1 pr-2">
           {title}
         </h3>
 
         {/* Price and change on the same line */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <span className={`text-lg font-bold ${changeColor}`}>
             {price.toFixed(2)}
           </span>
