@@ -57,7 +57,7 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'S.', protected: false, isLogo: false },
+    { path: '/', label: 'S.', protected: false, isLogo: true },
     { path: '/stories', label: 'Stories', protected: false },
     { path: '/swap', label: 'Trade', protected: false },
     // Admin link - only show if user is admin
@@ -114,10 +114,10 @@ const Navbar = () => {
             {navItems.map((item) => (
               item.isLogo ? (
                 <Link
-                  key={item.path}
-                  href={item.path}
-                  className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap"
-                >
+                key={item.path}
+                href={item.path}
+                className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap"
+              >
                   {item.label}
                 </Link>
               ) : (

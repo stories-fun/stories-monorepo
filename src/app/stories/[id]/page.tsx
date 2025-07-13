@@ -7,6 +7,7 @@ import CustomButton from "@/components/common/Button";
 import { MoonIcon, Sun, Share2, Gift, Volume2, AlertCircle, Loader2 } from "lucide-react";
 import StoryModal from "@/components/stories/StoryModal";
 import TradeModal from "@/components/stories/TradeModal";
+import { useAppKitAccount } from '@reown/appkit/react';
 
 // Types for API response
 interface Author {
@@ -82,6 +83,9 @@ export default function SingleStoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+  const { address } = useAppKitAccount();
+
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
 
@@ -143,7 +147,7 @@ export default function SingleStoryPage() {
 
       // Get query parameters for wallet addresses
       const adminWalletAddress = searchParams.get('admin_wallet_address');
-      const walletAddress = searchParams.get('wallet_address');
+      const walletAddress = address;
       
       // Build URL with query parameters
       const url = new URL(`/api/stories/${storyId}`, window.location.origin);

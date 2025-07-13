@@ -93,8 +93,8 @@ async function validateStoryAccess(
         .eq('story_id', storyId)
         .eq('wallet_address', requestingWalletAddress)
         .eq('status', 'completed')
-        .single();
-
+        .maybeSingle();
+        console.log("Matching purchases:", purchase);
       if (!purchaseError && purchase) {
         return {
           canAccess: true,

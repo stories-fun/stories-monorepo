@@ -512,7 +512,7 @@ export default function StoriesPage() {
           </p>
         </div>
 
-        <div className="fixed top-1/2 -translate-y-1/2 right-8 z-10 flex flex-col gap-4 items-center">
+        <div className="hidden lg:flex fixed top-1/2 -translate-y-1/2 right-8 z-10 flex-col gap-4 items-center">
           <CustomButton
             onClick={() => setActiveTab('discover')}
             icon={Search}
