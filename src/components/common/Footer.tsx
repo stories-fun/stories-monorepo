@@ -8,9 +8,9 @@ export default function Footer() {
     "font-bold text-[20px] leading-[150%] tracking-normal text-center";
 
   return (
-    <footer className="w-full bg-[#141414] text-[#FFEEBA] pt-16 pb-10 relative overflow-hidden">
+    <footer className="w-full bg-[#141414] text-[#FFEEBA] pt-16 pb-10 relative overflow-hidden z-100">
       {/* Cloud Left */}
-      <div className="absolute top-0 left-0 w-[120px] sm:w-[160px]">
+      <div className="absolute top-0 left-0 w-[120px] sm:w-[160px] mb-10">
         <Image
           src="/cloud_left.svg"
           alt="Cloud Left"
@@ -21,7 +21,7 @@ export default function Footer() {
       </div>
 
       {/* Cloud Right */}
-      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px]">
+      <div className="absolute top-[140px] right-0 w-[120px] sm:w-[160px] overflow-hidden mt-10">
         <Image
           src="/cloud_right.svg"
           alt="Cloud Right"
@@ -32,7 +32,7 @@ export default function Footer() {
       </div>
 
       {/* Heading Text */}
-      <h1 className="text-[40px] sm:text-[60px] md:text-[80px] font-extrabold text-center leading-[100%] tracking-tight px-4 whitespace-nowrap overflow-hidden text-[#FFEEBA] z-10">
+      <h1 className="text-[40px] sm:text-[60px] md:text-[140px] font-extrabold text-center leading-[100%] tracking-tight px-4 whitespace-nowrap overflow-hidden text-[#FFEEBA] z-10">
         Storytelling made fun
       </h1>
 
@@ -47,12 +47,41 @@ export default function Footer() {
       {/* Footer Content */}
       <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-8 mt-40 relative z-10">
         {/* Center logo */}
-        <div className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
+        <div className="hidden sm:block text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
           S.
         </div>
 
-        {/* First row */}
-        <div className={`flex justify-center gap-16 text-sm ${textStyle}`}>
+        {/* Mobile: All links in one row */}
+        <div
+          className={`flex sm:hidden flex-nowrap justify-center items-center w-full gap-4 text-sm ${textStyle}`}
+        >
+          <a href="#about" className="hover:underline">
+            About
+          </a>
+          <a href="#faqs" className="hover:underline">
+            FAQs
+          </a>
+          {/* logo */}
+          <div className="text-yellow-400 text-2xl sm:text-3xl font-bold hover:text-yellow-300 transition-colors whitespace-nowrap">
+            S.
+          </div>
+          <a href="#stories" className="hover:underline">
+            Stories
+          </a>
+          <a
+            href="https://twitter.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            Twitter
+          </a>
+        </div>
+
+        {/* Desktop: First row – narrower */}
+        <div
+          className={`hidden sm:flex justify-between w-full max-w-sm gap-20 text-sm ${textStyle}`}
+        >
           <a href="#about" className="hover:underline">
             About
           </a>
@@ -61,9 +90,9 @@ export default function Footer() {
           </a>
         </div>
 
-        {/* Second row */}
+        {/* Desktop: Second row – wider */}
         <div
-          className={`flex justify-between w-full max-w-md text-sm px-6 ${textStyle}`}
+          className={`hidden sm:flex justify-between w-full max-w-[1400px] gap-40 text-sm ${textStyle}`}
         >
           <a href="#stories" className="hover:underline">
             Stories

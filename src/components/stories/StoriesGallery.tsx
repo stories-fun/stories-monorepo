@@ -131,10 +131,10 @@ const StoryCard: React.FC<{
     onReadStory(story);
   };
   
-  const handleReadClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onReadStory(story);
-  };
+  // const handleReadClick = (e: React.MouseEvent) => {
+  //   e.stopPropagation();
+  //   onReadStory(story);
+  // };
   
 
   return (
@@ -154,7 +154,10 @@ const StoryCard: React.FC<{
   authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"}
   contentSnippet={story.content.substring(0, )}
   isOwner={isOwner}
-  onClick={handleReadClick}
+  onClick={() => {
+    // Handle stopPropagation earlier in the wrapping element if needed
+    onReadStory(story);
+  }}
 />
 
 

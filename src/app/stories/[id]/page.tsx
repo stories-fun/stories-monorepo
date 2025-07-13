@@ -72,7 +72,7 @@ const ErrorDisplay = ({ message, onRetry }: { message: string; onRetry: () => vo
 export default function SingleStoryPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  
+  const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [isWideScreen, setIsWideScreen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,8 +83,81 @@ export default function SingleStoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const { address } = useAppKitAccount();
+
+  const estimateTTSDuration = (text: string, wpm = 200) => {
+    const cleanText = text.replace(/<[^>]*>/g, ''); // remove HTML tags
+    const wordCount = cleanText.trim().split(/\s+/).length;
+    const minutes = wordCount / wpm;
+    const seconds = Math.round(minutes * 60);
+    return seconds;
+  };
+  
+  const formatSecondsToTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+
+  const [ttsEstimate, setTTSEstimate] = useState<string | null>(null);
+  
+
+  const handleListenClick = async () => {
+    if (!story?.content) return;
+  
+    // If audio already exists and is playing, pause it
+    if (audio && isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      return;
+    }
+  
+    // If paused audio exists, resume it
+    if (audio && !isPlaying) {
+      audio.play();
+      setIsPlaying(true);
+      return;
+    }
+  
+    // New audio request
+    const seconds = estimateTTSDuration(story.content);
+    setTTSEstimate(formatSecondsToTime(seconds)); // show estimated duration
+  
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: story.content.slice(0, 4000) }),
+      });
+  
+      if (!res.ok) {
+        console.error("Failed to fetch audio");
+        return;
+      }
+  
+      const blob = await res.blob();
+      const audioUrl = URL.createObjectURL(blob);
+  
+      if (audio) {
+        audio.pause();
+        URL.revokeObjectURL(audio.src);
+      }
+  
+      const newAudio = new Audio(audioUrl);
+      setAudio(newAudio);
+      setIsPlaying(true);
+      newAudio.play();
+  
+      // Stop playing flag on end
+      newAudio.onended = () => setIsPlaying(false);
+    } catch (err) {
+      console.error("TTS error:", err);
+    }
+  };
+  
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -283,11 +356,15 @@ export default function SingleStoryPage() {
               className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
             />
             <CustomButton
-              onClick={() => console.log("Volume clicked")}
-              text="Listen"
-              icon={Volume2}
-              className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
-            />
+  onClick={handleListenClick}
+  text={isPlaying ? "Pause" : "Listen"}
+  icon={Volume2}
+  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+/>
+
+            {ttsEstimate && (
+  <p className="text-sm text-gray-400 mt-1 text-center">Estimated: {ttsEstimate}</p>
+)}
             <CustomButton
               onClick={handleTradeClick}
               text="Trade"
