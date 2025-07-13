@@ -42,12 +42,12 @@ export const metadata: Metadata = {
       { url: "/logo.png", sizes: "16x16", type: "image/png" },
     ],
     apple: [
-      { url: "/CyreneAI_logo_square.png", sizes: "180x180", type: "image/png" },
+      { url: "/logo.png", sizes: "180x180", type: "image/png" },
     ],
-    shortcut: [{ url: "/CyreneAI_logo_square.png" }],
+    shortcut: [{ url: "/logo.png" }],
   },
   openGraph: {
-    title: "CyreneAI",
+    title: "app.stories.fun",
     description: "Stories.fun is a social media platform for creators to share their stories and launch tokens related to their stories.",
    url: "https://app.stories.fun/",
     siteName: "app.stories.fun",
