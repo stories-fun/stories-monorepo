@@ -63,12 +63,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Styled Text */}
-        <p className="text-white text-[20px] font-black leading-[132%] tracking-[-0.03em] text-center">
-          Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-          Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,
-          when an unknown printer took a galley of type
-        </p>
+        <section className="text-center px-4 py-16 sm:py-24 ">
+  {/* Heading */}
+  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
+    every life is a story.<br />what&apos;s yours<span className="text-white">?</span>
+  </h1>
+
+  {/* Styled Subtext */}
+  <p className="text-base sm:text-lg md:text-xl text-[#4A4A4A] max-w-3xl mx-auto font-medium leading-relaxed">
+    We help Individuals and Businesses tell stories and form meaningful connections.
+    Let your authentic story become your Social Identity. Share your journey. Discover others.
+    Social Media that Invests in truth.
+  </p>
+</section>
+
       </section>
 
       {/* Carousel Section */}
