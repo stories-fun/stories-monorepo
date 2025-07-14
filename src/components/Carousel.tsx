@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import CustomButton from "./Button";
-import { Wallet } from "lucide-react"; // or your actual icon source
+import { Wallet } from "lucide-react";
 
 export interface CarouselItem {
   title: string;
