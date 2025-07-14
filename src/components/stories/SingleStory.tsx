@@ -1,21 +1,18 @@
+// src/components/stories/SingleStory.tsx
 "use client";
 
 import Image from "next/image";
-import { Clock5, ArrowUpCircle } from "lucide-react";
+import { Clock5, ArrowUpCircle, Heart, MoreHorizontal, Edit2, Trash2, Reply } from "lucide-react";
 import { useState, createContext, useContext } from "react";
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
-
-type CommentProps = {
-  userImage: string;
-  userName: string;
-  comment: string;
-  createdAt: string;
-  replies?: CommentProps[];
-};
+import { useComments, Comment } from '@/hooks/useComments';
+import { useAppKitAccount } from '@reown/appkit/react';
+import { toast } from 'sonner';
 
 interface SingleStoryProps {
+  storyId: number;
   title: string;
   timeToRead?: string;
   price?: number;
@@ -23,9 +20,6 @@ interface SingleStoryProps {
   author?: string;
   authorImage?: string;
   storyContent?: string;
-  comments: CommentProps[];
-  onNewComment: (text: string) => void;
-  onReplySubmit: (commentId: string, text: string) => void;
 }
 
 interface ThemeContextType {
@@ -38,7 +32,285 @@ export const ThemeContext = createContext<ThemeContextType>({
   toggleTheme: () => {},
 });
 
+// Individual Comment Component
+const CommentComponent = ({
+  comment,
+  isReply = false,
+  onReply,
+  onEdit,
+  onDelete,
+  onLike,
+  currentUserAddress,
+}: {
+  comment: Comment;
+  isReply?: boolean;
+  onReply: (commentId: number) => void;
+  onEdit: (commentId: number, content: string) => void;
+  onDelete: (commentId: number) => void;
+  onLike: (commentId: number) => void;
+  currentUserAddress?: string;
+}) => {
+  const { theme } = useContext(ThemeContext);
+  const [showMenu, setShowMenu] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+
+  const textColor = theme === "dark" ? "text-white" : "text-[#141414]";
+  const metaTextColor = theme === "dark" ? "text-gray-300" : "text-gray-600";
+
+  const isOwner = currentUserAddress === comment.user.wallet_address;
+  const canEdit = isOwner && isWithin24Hours(comment.created_at);
+
+  function isWithin24Hours(dateString: string): boolean {
+    const commentDate = new Date(dateString);
+    const now = new Date();
+    const diffHours = (now.getTime() - commentDate.getTime()) / (1000 * 60 * 60);
+    return diffHours <= 24;
+  }
+
+  function formatTimeAgo(dateString: string): string {
+    const commentDate = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - commentDate.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  }
+
+  const handleSaveEdit = () => {
+    if (editContent.trim() !== comment.content) {
+      onEdit(comment.comment_id, editContent.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditContent(comment.content);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className={`${isReply ? "ml-12 mt-4" : "mb-6"}`}>
+      <div className="flex gap-3">
+        {/* Fixed Avatar Container */}
+        <div className="relative w-10 h-10 flex-shrink-0">
+          <Image
+            src={comment.user.avatar_url ? `https://ipfs.erebrus.io/ipfs/${comment.user.avatar_url}` : "/pfp.jpeg"}
+            alt={comment.user.username}
+            fill
+            className="rounded-full object-cover"
+            sizes="40px"
+          />
+        </div>
+        
+        <div className="flex-1 min-w-0"> {/* Added min-w-0 for text overflow handling */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`font-semibold ${textColor} truncate`}>
+              {comment.user.username}
+            </span>
+            <span className={`text-xs ${metaTextColor} flex-shrink-0`}>
+              {formatTimeAgo(comment.created_at)}
+            </span>
+            {/* Options menu for comment owner */}
+            {isOwner && (
+              <div className="relative ml-auto flex-shrink-0">
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className={`p-1 hover:bg-gray-200 rounded ${metaTextColor}`}
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+                {showMenu && (
+                  <div className="absolute right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          setIsEditing(true);
+                          setShowMenu(false);
+                        }}
+                        className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 w-full text-left"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                    )}
+                    <button
+                      onClick={() => {
+                        onDelete(comment.comment_id);
+                        setShowMenu(false);
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 w-full text-left text-red-600"
+                    >
+                      <Trash2 size={14} />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Comment content */}
+          {isEditing ? (
+            <div className="mb-3">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-green-500"
+                rows={3}
+                maxLength={2000}
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleSaveEdit}
+                  className="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700"
+                  disabled={editContent.trim().length === 0}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-sm hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className={`text-sm mb-3 leading-relaxed ${textColor} break-words`}>
+              {comment.content}
+            </p>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-4 text-sm">
+            <button
+              onClick={() => onLike(comment.comment_id)}
+              className={`flex items-center gap-1 hover:text-red-500 transition-colors ${
+                comment.user_liked ? 'text-red-500' : 'text-gray-500'
+              }`}
+            >
+              <Heart 
+                size={16} 
+                fill={comment.user_liked ? 'currentColor' : 'none'}
+              />
+              <span>{comment.like_count}</span>
+            </button>
+            <span className="text-gray-400">•</span>
+            <button
+              onClick={() => onReply(comment.comment_id)}
+              className="text-green-600 font-medium hover:text-green-700 flex items-center gap-1"
+            >
+              <Reply size={14} />
+              Reply
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Replies */}
+      {comment.replies?.map((reply) => (
+        <CommentComponent
+          key={reply.comment_id}
+          comment={reply}
+          isReply={true}
+          onReply={onReply}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onLike={onLike}
+          currentUserAddress={currentUserAddress}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Reply Form Component
+const ReplyForm = ({
+  parentCommentId,
+  onSubmit,
+  onCancel,
+  parentAuthor,
+}: {
+  parentCommentId: number;
+  onSubmit: (content: string) => void;
+  onCancel: () => void;
+  parentAuthor: string;
+}) => {
+  const { theme } = useContext(ThemeContext);
+  const { address } = useAppKitAccount();
+  const [replyText, setReplyText] = useState("");
+  const bubbleColor = theme === "dark" ? "bg-[#E8DCA6]" : "bg-[#E8DCA6]";
+  const textColor = theme === "dark" ? "text-white" : "text-[#141414]";
+
+  const handleSubmit = () => {
+    if (replyText.trim()) {
+      onSubmit(replyText.trim());
+      setReplyText("");
+    }
+  };
+
+  // Get current user's avatar (you might want to fetch this from your user data)
+  const currentUserAvatar = "/pfp.jpeg"; // Default fallback
+
+  return (
+    <div className="flex gap-3 mt-4 ml-12">
+      {/* Fixed Avatar for Reply Form */}
+      <div className="relative w-8 h-8 flex-shrink-0">
+        <Image
+          src={currentUserAvatar}
+          alt="Your avatar"
+          fill
+          className="rounded-full object-cover"
+          sizes="32px"
+        />
+      </div>
+      
+      <div className="flex-1">
+        <div className={`flex items-center ${bubbleColor} rounded-lg px-4 py-2 w-full`}>
+          <input
+            type="text"
+            placeholder={`Reply to ${parentAuthor}...`}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            className={`flex-1 bg-transparent text-sm focus:outline-none ${textColor}`}
+            maxLength={2000}
+            autoFocus
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit();
+              }
+            }}
+          />
+          <div className="flex gap-2 ml-2">
+            <button
+              onClick={handleSubmit}
+              disabled={!replyText.trim()}
+              className="text-green-700 hover:text-green-800 disabled:text-gray-400"
+            >
+              <ArrowUpCircle size={20} />
+            </button>
+            <button
+              onClick={onCancel}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export function SingleStory({
+  storyId,
   title,
   timeToRead,
   price,
@@ -46,140 +318,101 @@ export function SingleStory({
   author,
   authorImage,
   storyContent,
-  comments,
-  onNewComment,
-  onReplySubmit,
 }: SingleStoryProps) {
   const { theme } = useContext(ThemeContext);
+  const { address } = useAppKitAccount();
+  
+  // Use the comments hook
+  const {
+    comments,
+    loading: commentsLoading,
+    error: commentsError,
+    pagination,
+    createComment,
+    toggleLike,
+    editComment,
+    deleteComment,
+    loadMore,
+    refresh,
+    canComment,
+    hasComments,
+  } = useComments({ storyId });
+
+  const [newComment, setNewComment] = useState("");
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
   const isPositive = change !== undefined && change >= 0;
   const changeColor = isPositive ? "text-green-700" : "text-red-700";
   const changeSymbol = isPositive ? "+" : "";
 
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState("");
-  const [newComment, setNewComment] = useState("");
-
-  const handleReply = (commentId: string) => {
-    setReplyingTo(replyingTo === commentId ? null : commentId);
-    setReplyText("");
-  };
-
   const bgColor = theme === "dark" ? "bg-[#141414]" : "bg-[#FFEEBA]";
   const textColor = theme === "dark" ? "text-white" : "text-[#141414]";
   const bubbleColor = theme === "dark" ? "bg-[#E8DCA6]" : "bg-[#E8DCA6]";
   const metaTextColor = theme === "dark" ? "text-gray-300" : "text-gray-600";
-  const borderColor =
-    theme === "dark" ? "border-[#141414]" : "border-[#E8DCA6]";
 
-  const CommentComponent = ({
-    comment,
-    isReply = false,
-    commentId,
-  }: {
-    comment: CommentProps;
-    isReply?: boolean;
-    commentId: string;
-  }) => (
-    <div className={`${isReply ? "ml-12 mt-4" : "mb-6"}`}>
-      <div className="flex gap-3">
-        <Image
-          src={comment.userImage}
-          alt={comment.userName}
-          width={40}
-          height={40}
-          className="rounded-full flex-shrink-0"
-        />
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={`font-semibold ${textColor}`}>
-              {comment.userName}
-            </span>
-          </div>
-          <p className={`text-sm mb-3 leading-relaxed ${textColor}`}>
-            {comment.comment}
-          </p>
-          <div className="flex items-center gap-4 text-sm">
-            <button className="text-green-600 font-medium hover:text-green-700">
-              Like
-            </button>
-            <span className="text-gray-400">•</span>
-            <button
-              onClick={() => handleReply(commentId)}
-              className="text-green-600 font-medium hover:text-green-700"
-            >
-              Reply
-            </button>
-            <span className="text-gray-400">•</span>
-            <span className={metaTextColor}>{comment.createdAt}</span>
-          </div>
-        </div>
-      </div>
+  const handleNewComment = async () => {
+    if (!newComment.trim()) return;
+    
+    const success = await createComment({ content: newComment.trim() });
+    if (success) {
+      setNewComment("");
+    }
+  };
 
-      {replyingTo === commentId && (
-        <div className="flex gap-3 mt-4 ml-12">
-          <Image
-            src="/lady_image.svg"
-            alt="Your avatar"
-            width={32}
-            height={32}
-            className="rounded-full flex-shrink-0"
-          />
-          <div className="flex-1">
-            <div
-              className={`flex items-center ${bubbleColor} rounded-full px-4 py-2 w-full`}
-            >
-              <input
-                type="text"
-                placeholder={`Reply to ${comment.userName}...`}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                className={`flex-1 bg-transparent text-sm focus:outline-none ${textColor}`}
-                autoFocus
-              />
-              <button
-                onClick={() => {
-                  if (replyText.trim()) {
-                    onReplySubmit(commentId, replyText.trim());
-                    setReplyingTo(null);
-                    setReplyText("");
-                  }
-                }}
-                className="text-green-700 hover:text-green-800 ml-2"
-              >
-                <ArrowUpCircle size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  const handleReply = async (parentCommentId: number, content: string) => {
+    const success = await createComment({ 
+      content, 
+      parent_comment_id: parentCommentId 
+    });
+    if (success) {
+      setReplyingTo(null);
+    }
+  };
 
-      {comment.replies?.map((reply, i) => (
-        <CommentComponent
-          key={i}
-          comment={reply}
-          isReply={true}
-          commentId={`${commentId}-reply-${i}`}
-        />
-      ))}
-    </div>
-  );
+  const handleReplyClick = (commentId: number) => {
+    if (!canComment) {
+      toast.error('Please connect your wallet to reply');
+      return;
+    }
+    setReplyingTo(replyingTo === commentId ? null : commentId);
+  };
+
+  const handleEdit = async (commentId: number, content: string) => {
+    await editComment(commentId, content);
+  };
+
+  const handleDelete = async (commentId: number) => {
+    if (window.confirm('Are you sure you want to delete this comment?')) {
+      await deleteComment(commentId);
+    }
+  };
+
+  const handleLike = async (commentId: number) => {
+    if (!canComment) {
+      toast.error('Please connect your wallet to like comments');
+      return;
+    }
+    await toggleLike(commentId);
+  };
+
+  // Get current user's avatar (you might want to fetch this from your user context)
+  const currentUserAvatar = "/pfp.jpeg"; // Default fallback
 
   return (
     <div className={`max-w-[770px] mt-20 relative ${bgColor} ${textColor}`}>
       {/* Author Info */}
       <div className="relative w-full">
         {author && authorImage && (
-          <div
-            className={`absolute top-0 left-0 bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10`}
-          >
-            <Image
-              src={authorImage}
-              alt={author}
-              width={48}
-              height={48}
-              className="rounded-full"
-            />
+          <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10">
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <Image
+                src={authorImage}
+                alt={author}
+                fill
+                className="rounded-full object-cover"
+                sizes="48px"
+              />
+            </div>
             <span className="text-sm font-semibold text-white">{author}</span>
           </div>
         )}
@@ -217,7 +450,7 @@ export function SingleStory({
           )}
         </div>
 
-        {/* HTML Story Content */}
+        {/* Story Content */}
         {storyContent && (
           <div className="mt-4 mb-5 space-y-4 pb-10">
             <ReactMarkdown 
@@ -281,35 +514,42 @@ export function SingleStory({
           </div>
         )}
 
-        {/* Add Comment */}
+        {/* Comments Section */}
         <div className="mt-8 mb-6 pb-6">
+          {/* Add Comment */}
           <div className="flex gap-3 mb-6">
-            <Image
-              src="/lady_image.svg"
-              alt="Your avatar"
-              width={40}
-              height={40}
-              className="rounded-full flex-shrink-0"
-            />
+            {/* Fixed Avatar for Comment Input */}
+            <div className="relative w-10 h-10 flex-shrink-0">
+              <Image
+                src={currentUserAvatar}
+                alt="Your avatar"
+                fill
+                className="rounded-full object-cover"
+                sizes="40px"
+              />
+            </div>
+            
             <div className="flex-1">
-              <div
-                className={`flex items-center ${bubbleColor} rounded-full px-4 py-2 w-full`}
-              >
+              <div className={`flex items-center ${bubbleColor} rounded-full px-4 py-2 w-full`}>
                 <input
                   type="text"
-                  placeholder="Add comment..."
+                  placeholder={canComment ? "Add comment..." : "Connect wallet to comment..."}
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   className={`flex-1 bg-transparent text-sm focus:outline-none ${textColor}`}
-                />
-                <button
-                  onClick={() => {
-                    if (newComment.trim()) {
-                      onNewComment(newComment.trim());
-                      setNewComment("");
+                  disabled={!canComment}
+                  maxLength={2000}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleNewComment();
                     }
                   }}
-                  className="text-green-700 hover:text-green-800 ml-2"
+                />
+                <button
+                  onClick={handleNewComment}
+                  disabled={!canComment || !newComment.trim()}
+                  className="text-green-700 hover:text-green-800 ml-2 disabled:text-gray-400"
                 >
                   <ArrowUpCircle size={20} />
                 </button>
@@ -317,17 +557,79 @@ export function SingleStory({
             </div>
           </div>
 
+          {/* Comments Loading */}
+          {commentsLoading && (
+            <div className="flex justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+            </div>
+          )}
+
+          {/* Comments Error */}
+          {commentsError && (
+            <div className="text-center py-4">
+              <p className="text-red-500 mb-2">Failed to load comments</p>
+              <button
+                onClick={refresh}
+                className="text-blue-500 hover:underline text-sm"
+              >
+                Try again
+              </button>
+            </div>
+          )}
+
           {/* Comments List */}
-          {comments.map((comment, index) => (
-            <CommentComponent
-              key={index}
-              comment={comment}
-              commentId={`comment-${index}`}
-            />
-          ))}
+          {hasComments && (
+            <div className="space-y-4">
+              {comments.map((comment) => (
+                <div key={comment.comment_id}>
+                  <CommentComponent
+                    comment={comment}
+                    onReply={handleReplyClick}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onLike={handleLike}
+                    currentUserAddress={address}
+                  />
+                  
+                  {/* Reply Form */}
+                  {replyingTo === comment.comment_id && (
+                    <ReplyForm
+                      parentCommentId={comment.comment_id}
+                      parentAuthor={comment.user.username}
+                      onSubmit={(content) => handleReply(comment.comment_id, content)}
+                      onCancel={() => setReplyingTo(null)}
+                    />
+                  )}
+                </div>
+              ))}
+
+              {/* Load More Button */}
+              {pagination.has_more && (
+                <div className="text-center pt-4">
+                  <button
+                    onClick={loadMore}
+                    disabled={commentsLoading}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {commentsLoading ? 'Loading...' : 'Load More Comments'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* No Comments */}
+          {!hasComments && !commentsLoading && !commentsError && (
+            <div className="text-center py-8">
+              <p className={`${metaTextColor} mb-2`}>No comments yet</p>
+              <p className={`${metaTextColor} text-sm`}>
+                {canComment ? 'Be the first to comment!' : 'Connect your wallet to join the conversation'}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Wave SVG at the bottom -desktop */}
+        {/* Wave SVG at the bottom */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden sm:h-[100px] hidden sm:block">
           <svg
             width="100%"
@@ -345,7 +647,8 @@ export function SingleStory({
             </g>
           </svg>
         </div>
-        {/* Wave SVG at the bottom -mobile */}
+        
+        {/* Wave SVG at the bottom - mobile */}
         <div className="absolute bottom-0 left-0 w-full overflow-hidden sm:h-[100px] block sm:hidden">
           <svg
             width="100%"

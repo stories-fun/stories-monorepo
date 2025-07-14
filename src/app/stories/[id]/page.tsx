@@ -1,3 +1,4 @@
+// src/app/stories/[id]/page.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -14,7 +15,7 @@ interface Author {
   id: number;
   username: string;
   wallet_address: string;
-  avatar_url?: string; // Optional, might not be present in all stories
+  avatar_url?: string;
 }
 
 interface ApprovedBy {
@@ -101,10 +102,8 @@ export default function SingleStoryPage() {
     return `${mins}m ${secs}s`;
   };
 
-
   const [ttsEstimate, setTTSEstimate] = useState<string | null>(null);
   
-
   const handleListenClick = async () => {
     if (!story?.content) return;
   
@@ -124,7 +123,7 @@ export default function SingleStoryPage() {
   
     // New audio request
     const seconds = estimateTTSDuration(story.content);
-    setTTSEstimate(formatSecondsToTime(seconds)); // show estimated duration
+    setTTSEstimate(formatSecondsToTime(seconds));
   
     try {
       const res = await fetch("/api/tts", {
@@ -157,41 +156,9 @@ export default function SingleStoryPage() {
       console.error("TTS error:", err);
     }
   };
-  
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
-
-  const [comments, setComments] = useState([
-    {
-      userImage: "/lady_image.svg",
-      userName: "Toffani.ok",
-      comment: "Ultricies ultricies interdum dolor sodales...",
-      createdAt: "6h",
-      replies: [
-        {
-          userImage: "/lady_image.svg",
-          userName: "Toffani.ok",
-          comment: "Ultricies ultricies interdum...",
-          createdAt: "6h",
-        },
-      ],
-    },
-  ]);
-
-  const handleNewComment = (text: string) => {
-    if (!text.trim()) return;
-    setComments([
-      ...comments,
-      {
-        userImage: "/lady_image.svg",
-        userName: "You",
-        comment: text,
-        createdAt: "Just now",
-        replies: [],
-      },
-    ]);
-  };
 
   const handleShare = () => {
     if (navigator.share && story) {
@@ -254,7 +221,7 @@ export default function SingleStoryPage() {
   // Initial fetch and retry function
   useEffect(() => {
     fetchStory();
-  }, [params.id, searchParams]);
+  }, [params.id, searchParams, address]); // Added address dependency
 
   useEffect(() => {
     const handleResize = () => {
@@ -264,30 +231,6 @@ export default function SingleStoryPage() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  const handleReplySubmit = (commentId: string, text: string) => {
-    if (!text.trim()) return;
-    setComments((prev) =>
-      prev.map((c, i) => {
-        const id = `comment-${i}`;
-        if (id === commentId) {
-          return {
-            ...c,
-            replies: [
-              ...(c.replies || []),
-              {
-                userImage: "/lady_image.svg",
-                userName: "You",
-                comment: text,
-                createdAt: "now",
-              },
-            ],
-          };
-        }
-        return c;
-      })
-    );
-  };
 
   const handlePerksClick = () => {
     setIsModalOpen(true);
@@ -322,16 +265,14 @@ export default function SingleStoryPage() {
         <div className="max-w-[750px] w-full z-10">
           <ThemeContext.Provider value={{ theme, toggleTheme }}>
             <SingleStory
+              storyId={story.id} // ✅ Now passing the storyId for comments integration
               title={story.title}
               timeToRead={calculateReadingTime(story.content)}
               price={story.price_tokens}
               change={4.5} // You might want to calculate this based on historical data
               author={story.author.username}
-              authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"} // You might want to add author image to your API
+              authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"}
               storyContent={story.content}
-              comments={comments}
-              onNewComment={handleNewComment}
-              onReplySubmit={handleReplySubmit}
             />
           </ThemeContext.Provider>
         </div>
@@ -356,15 +297,14 @@ export default function SingleStoryPage() {
               className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
             />
             <CustomButton
-  onClick={handleListenClick}
-  text={isPlaying ? "Pause" : "Listen"}
-  icon={Volume2}
-  className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
-/>
-
+              onClick={handleListenClick}
+              text={isPlaying ? "Pause" : "Listen"}
+              icon={Volume2}
+              className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-lg"
+            />
             {ttsEstimate && (
-  <p className="text-sm text-gray-400 mt-1 text-center">Estimated: {ttsEstimate}</p>
-)}
+              <p className="text-sm text-gray-400 mt-1 text-center">Estimated: {ttsEstimate}</p>
+            )}
             <CustomButton
               onClick={handleTradeClick}
               text="Trade"
@@ -390,7 +330,7 @@ export default function SingleStoryPage() {
                 className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
               <CustomButton
-                onClick={() => console.log("Volume clicked")}
+                onClick={handleListenClick}
                 icon={Volume2}
                 className="bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-[#141414] rounded-full"
               />
