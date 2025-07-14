@@ -5,7 +5,7 @@ const sampleCarouselItems = [
   {
     id: 1,
     image: "/lion.webp",
-    title: "Tiffany Story",
+    title: "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power",
     url: "https://medium.com/@jeyprox/building-a-fully-customisable-carousel-slider-with-swipe-gestures-navigation-and-custom-cursor-4e986ccbd08f",
   },
   {

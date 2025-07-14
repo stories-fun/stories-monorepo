@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import CustomButton from "./Button";
+import { Wallet } from "lucide-react";
 
 export default function Footer() {
   const textStyle =
@@ -40,6 +41,7 @@ export default function Footer() {
       <div className="mt-10 z-10 flex justify-center">
         <CustomButton
           text="Unlock Stories"
+          icon={Wallet}
           onClick={() => console.log("Unlock Stories clicked")}
         />
       </div>
