@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import CustomButton from "./Button";
+import { Wallet } from "lucide-react"; // or your actual icon source
 
 export interface CarouselItem {
   title: string;
@@ -45,52 +46,60 @@ export default function NewCarousel({
   }, [emblaApi]);
 
   return (
-    <div className={cn("relative w-full flex flex-col items-center", className)}>
+    <div
+      className={cn("relative w-full flex flex-col items-center", className)}
+    >
       <div className="relative w-full max-w-6xl mx-auto">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {items.map((item, index) => (
               <div
-                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4"
+                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4 flex flex-col items-center"
                 key={item.id ? `item-${item.id}` : `item-${index}`}
               >
                 <motion.div
-                  className="h-full"
+                  className="w-full"
                   animate={{
                     scale: activeIndex === index ? 1 : 0.85,
                     opacity: activeIndex === index ? 1 : 0.5,
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  <Link
-                    href={item.url}
-                    className="block w-full h-full group"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    draggable={false}
+                  <div
+                    className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
+                    style={{ aspectRatio: "16/9" }}
                   >
-                    <div
-                      className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
-                      style={{ aspectRatio: "16/9" }}
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
 
-                      {/* Title at Top */}
-                      <div className="absolute top-0 left-0 w-full bg-gradient-to-b from-black/70 to-transparent px-4 py-3 text-white">
-                        <div className="relative group max-w-full">
-                          <p className="text-base md:text-lg font-semibold leading-snug">
-                            {item.title}
-                          </p>
-                        </div>
+                    {/* Title at Top */}
+                    <div className="absolute top-0 left-0 w-full bg-gradient-to-b from-black/70 to-transparent px-4 py-3 text-white">
+                      <div className="relative group max-w-full">
+                        <p className="text-base md:text-lg font-semibold leading-snug">
+                          {item.title}
+                        </p>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
+
+                {/* Button below image — only on active slide */}
+                {activeIndex === index && (
+                  <div className="mt-4">
+                    <CustomButton
+                      text="Unlock Stories"
+                      icon={Wallet}
+                      onClick={() =>
+                        // open url in new tab
+                        window.open(item.url, "_blank")
+                      }
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
