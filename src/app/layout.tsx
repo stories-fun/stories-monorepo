@@ -12,21 +12,7 @@ import { Toaster } from "sonner";
 import AppKitThemeCustomizer from "@/components/AppKitThemeCustomizer";
 import ProrectedRoute from "@/components/ProtectedRoute";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
   subsets: ["latin"],
@@ -84,7 +70,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${poppins.variable} antialiased`}
+        className={`${instrumentSans.variable} antialiased`}
       >
         <WalletProviderWrapper>
           <AppKit>
