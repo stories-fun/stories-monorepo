@@ -231,7 +231,7 @@ export const StoryCreator: React.FC<{
         </button>
       </div>
       
-      <div className="prose prose-invert max-w-none">
+      <div className="prose prose-invert max-w-none text-white">
         <ReactMarkdown 
           rehypePlugins={[rehypeRaw, remarkGfm]}
           components={{
@@ -354,7 +354,7 @@ export const StoryCreator: React.FC<{
               </div>
 
               {/* Content Field with formatting toolbar */}
-              <div className="bg-[#222222] rounded-xl p-6 border border-[#333333]">
+              <div className="text-white bg-[#222222] rounded-xl p-6 border border-[#333333]">
                 <label className="block text-sm font-medium text-[#AAAAAA] mb-3">
                   <PenTool className="h-4 w-4 inline mr-2" />
                   Story Content (Markdown supported)
