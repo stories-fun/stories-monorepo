@@ -56,6 +56,38 @@ export default function NewCarousel({
                 className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4 flex flex-col items-center"
                 key={item.id ? `item-${item.id}` : `item-${index}`}
               >
+                {/* Title above image */}
+                <div
+                  className={`mb-2 px-4 py-3 text-[#141414] bg-white transition-opacity duration-500 h-10 flex items-center relative ${
+                    activeIndex === index ? "opacity-100" : "opacity-50"
+                  }`}
+                  style={{ marginRight: "25%" }}
+                >
+                  {/* Folded corner */}
+                  <div className="absolute top-[-1px] right-0 w-3 h-3 z-1">
+                    <div
+                      className="absolute top-0 right-0 w-full h-full shadow-md"
+                      style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
+                    />
+                    <div
+                      className="absolute top-0 right-0 w-full h-full border-l border-b bg-[#141414] shadow-md"
+                      style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
+                    />
+                    <div
+                      className="absolute top-0 right-0 w-full h-full bg-white shadow-md"
+                      style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
+                    />
+                    <div
+                      className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-white shadow-md"
+                      style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
+                    />
+                  </div>
+
+                  <p className="text-base md:text-lg font-semibold leading-snug">
+                    {item.title}
+                  </p>
+                </div>
+
                 <motion.div
                   className="w-full"
                   animate={{
@@ -68,21 +100,40 @@ export default function NewCarousel({
                     className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
                     style={{ aspectRatio: "16/9" }}
                   >
+                    {/* Folded corner */}
+                    <div className="absolute top-[-1px] right-0 w-10 h-10 z-1">
+                      <div
+                        className="absolute top-0 right-0 w-full h-full shadow-md"
+                        style={{
+                          clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)",
+                        }}
+                      />
+                      <div
+                        className="absolute top-0 right-0 w-full h-full border-l border-b bg-[#141414] shadow-md"
+                        style={{
+                          clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)",
+                        }}
+                      />
+                      <div
+                        className="absolute top-0 right-0 w-full h-full bg-[#FFF6C9] shadow-md"
+                        style={{
+                          clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
+                        }}
+                      />
+                      <div
+                        className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-[#FFF6C9] shadow-md"
+                        style={{
+                          clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
+                        }}
+                      />
+                    </div>
+
                     <img
                       src={item.image}
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
-
-                    {/* Title at Top */}
-                    <div className="absolute top-0 left-0 w-full bg-gradient-to-b from-black/70 to-transparent px-4 py-3 text-white">
-                      <div className="relative group max-w-full">
-                        <p className="text-base md:text-lg font-semibold leading-snug">
-                          {item.title}
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </motion.div>
 
