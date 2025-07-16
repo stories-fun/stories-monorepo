@@ -732,7 +732,7 @@ export default function StoriesPage() {
         </div>
 
         {showSnippetModal && selectedStory && (
-         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex items-center justify-center">
+         <div className="fixed inset-0 z-150 bg-black/40 backdrop-blur-md flex items-center justify-center">
          
        
            

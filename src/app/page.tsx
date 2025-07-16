@@ -1,11 +1,16 @@
+"use client";
+
+import NewCarousel from "@/components/common/Carousel";
 import Image from "next/image";
-import Carousel from "@/components/common/Carousel";
+
+import { useEffect, useState } from "react";
 
 const sampleCarouselItems = [
   {
     id: 1,
     image: "/lion.webp",
-    title: "Tiffany Story",
+    title:
+      "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power",
     url: "https://medium.com/@jeyprox/building-a-fully-customisable-carousel-slider-with-swipe-gestures-navigation-and-custom-cursor-4e986ccbd08f",
   },
   {
@@ -35,14 +40,52 @@ const sampleCarouselItems = [
 ];
 
 export default function Home() {
+  const [scrollPosition, setScrollPosition] = useState(0);
+
+  useEffect(() => {
+    const initializePosition = () => {
+      if (window.innerWidth < 1000) {
+        document.querySelectorAll(".transition-transform").forEach((el) => {
+          const element = el as HTMLElement;
+          element.classList.remove(
+            "transition-transform",
+            "duration-1000",
+            "ease-out"
+          );
+          element.style.transform = "none";
+        });
+      }
+    };
+
+    const handleScroll = () => {
+      if (window.innerWidth >= 1000) {
+        setScrollPosition(window.scrollY);
+      } else {
+        setScrollPosition(300); // Set to the final position matching the styles
+      }
+    };
+
+    const handleResize = () => {
+      initializePosition();
+    };
+
+    initializePosition();
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#141414] flex flex-col items-center">
+    <div className="min-h-screen bg-[#141414] flex flex-col items-center relative overflow-hidden">
       {/* Logo Section */}
       <div className="w-full max-w-[1400px] mt-16 sm:mt-[200px] flex justify-center">
         <Image
           src="/stories_logo_large.svg"
           alt="Stories Logo"
-          width={600}
+          width={1000}
           height={200}
           priority
         />
@@ -50,43 +93,80 @@ export default function Home() {
 
       {/* Circle Images and Text Section */}
       <section className="mt-16 sm:mt-[200px] flex flex-col items-center text-center max-w-[700px] px-6">
-        {/* Row of Circles */}
-        <div className="flex items-center justify-center gap-6 mb-[90px]">
-          <div className="w-16 h-16 sm:w-24 sm:h-24 relative">
+        {/* Row of Circles with Scroll Animation */}
+        <div className="flex items-center justify-center gap-6 mb-[90px] relative">
+          {/* Purple Circle */}
+          <div
+            className={`w-16 h-16 sm:w-24 sm:h-24 relative transition-transform duration-1000 ease-out`}
+            style={{
+              transform: `translate(${scrollPosition > 200 ? "0" : "-270px"}, ${
+                scrollPosition > 200 ? "0" : "-450px"
+              })`,
+            }}
+          >
             <Image src="/Ellipse 58.svg" alt="Purple Circle" fill />
           </div>
-          <div className="w-16 h-16 sm:w-24 sm:h-24 relative rounded-full overflow-hidden">
-            <Image src="/lady_image.svg" alt="Lady" fill className="object-cover" />
+
+          {/* Lady Image */}
+          <div
+            className={`w-16 h-16 sm:w-24 sm:h-24 relative rounded-full overflow-hidden transition-transform duration-1000 ease-out`}
+            style={{
+              transform: `translate(${scrollPosition > 200 ? "0" : "170px"}, ${
+                scrollPosition > 200 ? "0" : "-470px"
+              })`,
+            }}
+          >
+            <Image
+              src="/lady_image.svg"
+              alt="Lady"
+              fill
+              className="object-cover"
+            />
           </div>
-          <div className="w-16 h-16 sm:w-24 sm:h-24 relative">
+
+          {/* Red Circle */}
+          <div
+            className={`w-16 h-16 sm:w-24 sm:h-24 relative transition-transform duration-1000 ease-out`}
+            style={{
+              transform: `translate(${scrollPosition > 200 ? "0" : "-270px"}, ${
+                scrollPosition > 200 ? "0" : "-350px"
+              })`,
+            }}
+          >
             <Image src="/Ellipse 57.svg" alt="Red Circle" fill />
           </div>
         </div>
 
-        <section className="text-center px-4 py-16 sm:py-24 ">
-  {/* Heading */}
-  <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight mb-6">
-    every life is a story.<br />what&apos;s yours<span className="text-white">?</span>
-  </h1>
-
-  {/* Styled Subtext */}
-  <p className="text-base sm:text-lg md:text-xl text-[#4A4A4A] max-w-3xl mx-auto font-medium leading-relaxed">
-    We help Individuals and Businesses tell stories and form meaningful connections.
-    Let your authentic story become your Social Identity. Share your journey. Discover others.
-    Social Media that Invests in truth.
-  </p>
-</section>
-
+        {/* Styled Text with Scroll Animation */}
+        <p
+          className={`text-white text-[20px] font-black leading-[132%] tracking-[-0.03em] text-center transition-transform duration-1000 ease-out`}
+          style={{
+            transform: `translateY(${scrollPosition > 300 ? "0" : "8px"})`,
+          }}
+        >
+          Lorem Ipsum is simply dummy text of the printing and typesetting
+          industry. Lorem Ipsum has been the industry's standard dummy text ever
+          since the 1500s, when an unknown printer took a galley of type
+        </p>
       </section>
 
-      {/* Carousel Section */}
-      <section className="mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4">
-        <Carousel items={sampleCarouselItems} />
+      {/* Carousel Section with Scroll Animation */}
+      <section
+        className={`mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 transition-transform duration-1000 ease-out`}
+        style={{
+          transform: `translateY(${scrollPosition > 400 ? "0" : "8px"})`,
+        }}
+      >
+        <NewCarousel items={sampleCarouselItems} />
       </section>
-      
 
-      {/* image Section group 24.png */}
-      <section className="mt-16 sm:mt-[200px] mb-16 sm:mb-[200px] w-full flex justify-center">
+      {/* Image Section group 24.png with Scroll Animation */}
+      <section
+        className={`mt-16 sm:mt-[200px] mb-16 sm:mb-[200px] w-full flex justify-center transition-transform duration-1000 ease-out`}
+        style={{
+          transform: `translateY(${scrollPosition > 500 ? "0" : "8px"})`,
+        }}
+      >
         <div className="relative w-full h-[340px] sm:h-[400px]">
           <Image
             src="/Group 24.png"

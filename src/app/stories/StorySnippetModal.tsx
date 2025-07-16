@@ -299,7 +299,7 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[150] px-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-150 px-4">
 
       <div className="relative">
         {/* Main Modal Card */}

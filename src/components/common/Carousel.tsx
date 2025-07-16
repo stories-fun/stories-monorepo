@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/util";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
+import CustomButton from "./Button";
+import { Wallet } from "lucide-react";
+import { cn } from "@/lib/util";
 
 export interface CarouselItem {
   title: string;
@@ -29,80 +31,82 @@ export default function NewCarousel({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    if (emblaApi) {
-      const onSelect = () => {
-        setActiveIndex(emblaApi.selectedScrollSnap());
-      };
-      emblaApi.on("select", onSelect);
-      onSelect(); // Set initial active index
-      return () => {
-        emblaApi.off("select", onSelect);
-      };
-    }
+    if (!emblaApi) return;
+
+    const onSelect = () => {
+      setActiveIndex(emblaApi.selectedScrollSnap());
+    };
+
+    emblaApi.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
   }, [emblaApi]);
 
   return (
     <div
       className={cn("relative w-full flex flex-col items-center", className)}
     >
-      <div className="w-full flex justify-center mb-8 h-16">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={items[activeIndex]?.title}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="relative inline-block bg-white px-8 py-4 font-extrabold text-xl sm:text-2xl text-black"
-          >
-            {items[activeIndex]?.title}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
       <div className="relative w-full max-w-6xl mx-auto">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {items.map((item, index) => (
               <div
-                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4"
+                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4 flex flex-col items-center"
                 key={item.id ? `item-${item.id}` : `item-${index}`}
               >
                 <motion.div
-                  className="h-full"
+                  className="w-full"
                   animate={{
                     scale: activeIndex === index ? 1 : 0.85,
                     opacity: activeIndex === index ? 1 : 0.5,
                   }}
                   transition={{ type: "spring", stiffness: 400, damping: 25 }}
                 >
-                  <Link
-                    href={item.url}
-                    className="block w-full h-full group"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    draggable={false}
+                  <div
+                    className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
+                    style={{ aspectRatio: "16/9" }}
                   >
-                    <div
-                      className={cn(
-                        "relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
-                      )}
-                      style={{ aspectRatio: "16/9" }}
-                    >
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+
+                    {/* Title at Top */}
+                    <div className="absolute top-0 left-0 w-full bg-gradient-to-b from-black/70 to-transparent px-4 py-3 text-white">
+                      <div className="relative group max-w-full">
+                        <p className="text-base md:text-lg font-semibold leading-snug">
+                          {item.title}
+                        </p>
+                      </div>
                     </div>
-                  </Link>
+                  </div>
                 </motion.div>
+
+                {/* Button below image — only on active slide */}
+                {activeIndex === index && (
+                  <div className="mt-4">
+                    <CustomButton
+                      text="Unlock Stories"
+                      icon={Wallet}
+                      onClick={() =>
+                        // open url in new tab
+                        window.open(item.url, "_blank")
+                      }
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Pagination Dots */}
       <div className="flex justify-center mt-8 space-x-3">
         {items.map((_, index) => (
           <button
