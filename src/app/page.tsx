@@ -117,8 +117,8 @@ export default function Home() {
             }}
           >
             <Image
-              src="/lady_image.svg"
-              alt="Lady"
+              src="/adi.png"
+              alt="ADI"
               fill
               className="object-cover"
             />

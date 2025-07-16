@@ -394,7 +394,7 @@ export const DexScreenerSwap = () => {
   if (loading && !pairData) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 bg-[#FFDE7A]"></div>
       </div>
     );
   }
@@ -423,23 +423,23 @@ export const DexScreenerSwap = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-[#2A2A2A]">
+      <div className="flex bg-[#333333] rounded-lg p-1 mb-4">
         <button
           onClick={() => setActiveTab('swap')}
-          className={`flex-1 py-4 font-medium text-lg ${
+          className={`flex-1 py-4 font-medium text-lg rounded-md ${
             activeTab === 'swap' 
-              ? 'text-white border-b-2 border-[#00A3FF]' 
-              : 'text-[#8A8A8A] hover:text-white'
+              ? 'bg-[#FFDE7A] text-black' 
+                : 'text-gray-400 hover:bg-[#2A2A2A]'
           }`}
         >
           Swap
         </button>
         <button
           onClick={() => setActiveTab('info')}
-          className={`flex-1 py-4 font-medium text-lg ${
+          className={`flex-1 py-4 font-medium text-lg rounded-md ${
             activeTab === 'info' 
-              ? 'text-white border-b-2 border-[#00A3FF]' 
-              : 'text-[#8A8A8A] hover:text-white'
+              ? 'bg-[#FFDE7A] text-black' 
+                : 'text-gray-400 hover:bg-[#2A2A2A]'
           }`}
         >
           Token Info
@@ -453,39 +453,39 @@ export const DexScreenerSwap = () => {
             {/* Swap Form */}
             <div className="space-y-6">
               {/* Input Mode Toggle */}
-              <div className="flex bg-[#222222] rounded-lg p-1 border border-[#333333]">
-                <button
-                  onClick={() => setInputMode('SOL')}
-                  className={`flex-1 py-2 rounded-md ${
-                    inputMode === 'SOL' 
-                      ? 'bg-[#00A3FF] text-white' 
-                      : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
-                  }`}
-                >
-                  SOL
-                </button>
-                <button
-                  onClick={() => setInputMode('USD')}
-                  className={`flex-1 py-2 rounded-md ${
-                    inputMode === 'USD' 
-                      ? 'bg-[#00A3FF] text-white' 
-                      : 'text-[#AAAAAA] hover:bg-[#2A2A2A]'
-                  }`}
-                >
-                  USD
-                </button>
-              </div>
+              <div className="flex bg-[#333333] rounded-lg p-1 mb-4">
+          <button
+            onClick={() => setInputMode('SOL')}
+            className={`flex-1 py-2 rounded-md ${
+              inputMode === 'SOL' 
+                ? 'bg-[#FFDE7A] text-black' 
+                : 'text-gray-400 hover:bg-[#2A2A2A]'
+            }`}
+          >
+            SOL
+          </button>
+          <button
+            onClick={() => setInputMode('USD')}
+            className={`flex-1 py-2 rounded-md ${
+              inputMode === 'USD' 
+                ? 'bg-[#FFDE7A] text-black' 
+                : 'text-gray-400 hover:bg-[#2A2A2A]'
+            }`}
+          >
+            USD
+          </button>
+        </div>
 
               {/* Input Section */}
-              <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+              <div className="bg-[#FFDE7A] rounded-xl p-4 border border-[#333333]">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[#AAAAAA]">You pay</span>
+                  <span className="text-black font-medium">You pay</span>
                   <div className="flex flex-col items-end">
-                    <span className="text-sm text-[#AAAAAA]">
+                    <span className="font-medium text-black">
                       Balance: {solBalance !== null ? solBalance.toFixed(4) : '-'} SOL
                     </span>
                     {inputMode === 'SOL' && (
-                      <span className="text-xs text-[#777777]">
+                      <span className="text-sm font-medium text-black">
                         ≈ ${calculateSolToUsd(solAmount)} USD
                       </span>
                     )}
@@ -496,7 +496,7 @@ export const DexScreenerSwap = () => {
                     type="number"
                     value={inputMode === 'SOL' ? solAmount : usdAmount}
                     onChange={inputMode === 'SOL' ? handleSolAmountChange : handleUsdAmountChange}
-                    className="flex-1 bg-transparent text-white text-2xl outline-none placeholder-[#555555]"
+                    className="flex-1 bg-transparent text-black text-2xl font-medium outline-none placeholder-[#555555]"
                     placeholder="0.0"
                     min="0"
                     step={inputMode === 'SOL' ? "0.1" : "0.01"}
@@ -515,10 +515,10 @@ export const DexScreenerSwap = () => {
               </div>
 
               {/* Output Section */}
-              <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
+              <div className="bg-[#FFDE7A] rounded-xl p-4 border border-[#333333]">
                 <div className="flex justify-between items-center mb-3">
-                  <span className="text-[#AAAAAA]">You receive</span>
-                  <span className="text-sm text-[#AAAAAA]">
+                  <span className="text-black font-medium">You receive</span>
+                  <span className=" text-black font-medium">
                     Balance: {STORIESBalance !== null ? STORIESBalance.toLocaleString() : '-'} STORIES
                   </span>
                 </div>
@@ -527,14 +527,14 @@ export const DexScreenerSwap = () => {
                     type="text"
                     value={quote ? (parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS).toFixed(4) : '0.0'}
                     readOnly
-                    className="flex-1 bg-transparent text-white text-2xl outline-none"
+                    className="flex-1 bg-transparent text-black text-2xl font-medium outline-none"
                   />
                   <div className="bg-[#333333] rounded-lg px-4 py-2">
                     <span className="font-medium text-white">STORIES</span>
                   </div>
                 </div>
                 {quote && (
-                  <div className="mt-2 text-xs text-[#777777]">
+                  <div className="mt-2 text-xs text-black font-medium">
                     ≈ ${(parseFloat(quote.outAmount) / 10 ** STORIES_DECIMALS * parseFloat(pairData?.priceUsd || '0')).toFixed(2)} USD
                   </div>
                 )}
@@ -574,7 +574,7 @@ export const DexScreenerSwap = () => {
               <div className="bg-[#222222] rounded-xl p-4 border border-[#333333]">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-[#AAAAAA]">Slippage Tolerance</span>
-                  <span className="text-sm text-[#00A3FF]">
+                  <span className="text-sm text-[#FFDE7A]">
                     {slippage}%
                   </span>
                 </div>
@@ -585,8 +585,8 @@ export const DexScreenerSwap = () => {
                       onClick={() => setSlippage(value)}
                       className={`flex-1 py-3 rounded-lg text-sm font-medium ${
                         slippage === value 
-                          ? 'bg-[#00A3FF] text-white' 
-                          : 'bg-[#333333] text-[#AAAAAA] hover:bg-[#3A3A3A]'
+                          ? 'bg-[#FFDE7A] text-black'
+                    : 'bg-[#333333] text-gray-400 hover:bg-[#3A3A3A]'
                       }`}
                     >
                       {value}%
@@ -622,7 +622,7 @@ export const DexScreenerSwap = () => {
                 <button
                   onClick={executeSwap}
                   disabled={loading || !quote || !isConnected || !isQuoteValid()}
-                  className="flex-1 py-4 bg-gradient-to-r from-[#00A3FF] to-[#00F0FF] hover:opacity-90 text-white text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                  className="flex-1 py-4 bg-gradient-to-r from-[#FFDE7A] to-[#FFC850] hover:opacity-90 text-white text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
                   {!isConnected ? 'Connect Wallet' : loading ? 'Processing...' : 'Swap Now'}
                 </button>
