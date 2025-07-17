@@ -238,7 +238,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Check if the story is in a state that allows updates
     // Only allow updates for published stories (you can modify this logic as needed)
-    if (existingStory.status !== 'published') {
+    if (existingStory.status !== 'published' && existingStory.status !== 'submitted') {
       return NextResponse.json(
         {
           success: false,
@@ -296,7 +296,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .insert({
         user_id: user.id,
         story_id: updatedStory.id,
-        status: 'pending'
+        status: 'submitted'
       })
       .select('submission_id, status, submitted_at')
       .single();
