@@ -1,7 +1,6 @@
-// src/components/stories/StoryCreator.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { toast } from 'sonner';
 import { 
@@ -13,30 +12,21 @@ import {
   AlertCircle,
   Check,
   Eye,
-  Lock,
-  Type,
-  Heading1,
-  Heading2,
-  Image as ImageIcon,
-  Video,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
   Quote
 } from 'lucide-react';
 import CustomButton from '@/components/common/Button';
-import ReactMarkdown from 'react-markdown';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
+import Editor from '@/components/stories/Editor';
+import RenderEditorOutput from '@/components/stories/RenderEditorOutput';
+
+
+import EditorJS, { OutputData } from '@editorjs/editorjs';
 
 interface StoryFormData {
   title: string;
-  content: string;
+  content: OutputData;
   price_tokens: number;
 }
 
-// Fixed error type to handle string error messages
 interface StoryFormErrors {
   title?: string;
   content?: string;
@@ -75,42 +65,24 @@ export const StoryCreator: React.FC<{
   const { address, isConnected } = useAppKitAccount();
   const [formData, setFormData] = useState<StoryFormData>({
     title: '',
-    content: '',
+    content: {
+      time: Date.now(),
+      blocks: [
+        {
+          type: 'paragraph',
+          data: {
+            text: ''
+          }
+        }
+      ]
+    },
     price_tokens: 0
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<StoryFormErrors>({});
   const [showPreview, setShowPreview] = useState(false);
-  const [cursorPosition, setCursorPosition] = useState(0);
+  const editorRef = useRef<EditorJS | null>(null);
 
-  // Formatting functions
-  const insertFormatting = (prefix: string, suffix: string = '', placeholder: string = '') => {
-    const textarea = document.getElementById('story-content') as HTMLTextAreaElement;
-    if (!textarea) return;
-
-    const startPos = textarea.selectionStart;
-    const endPos = textarea.selectionEnd;
-    const selectedText = formData.content.substring(startPos, endPos);
-    const beforeText = formData.content.substring(0, startPos);
-    const afterText = formData.content.substring(endPos);
-
-    let newText;
-    if (selectedText) {
-      newText = `${beforeText}${prefix}${selectedText}${suffix}${afterText}`;
-      setCursorPosition(startPos + prefix.length + selectedText.length + suffix.length);
-    } else {
-      newText = `${beforeText}${prefix}${placeholder}${suffix}${afterText}`;
-      setCursorPosition(startPos + prefix.length + placeholder.length + suffix.length);
-    }
-
-    setFormData(prev => ({ ...prev, content: newText }));
-    
-    // Focus back on textarea after a small delay
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(cursorPosition, cursorPosition);
-    }, 10);
-  };
   // Validation functions
   const validateForm = (): boolean => {
     const newErrors: StoryFormErrors = {};
@@ -121,10 +93,10 @@ export const StoryCreator: React.FC<{
       newErrors.title = 'Title must be 255 characters or less';
     }
 
-    if (!formData.content.trim()) {
+    if (!formData.content.blocks || 
+        formData.content.blocks.length === 0 || 
+        (formData.content.blocks.length === 1 && formData.content.blocks[0].data.text === '')) {
       newErrors.content = 'Content is required';
-    } else if (formData.content.trim().length > 50000) {
-      newErrors.content = 'Content must be 50,000 characters or less';
     }
 
     if (formData.price_tokens < 0) {
@@ -144,6 +116,18 @@ export const StoryCreator: React.FC<{
       return;
     }
 
+    // Save editor content before submission
+    if (editorRef.current) {
+      try {
+        const savedData = await editorRef.current.save();
+        setFormData(prev => ({ ...prev, content: savedData }));
+      } catch (error) {
+        console.error('Error saving editor content:', error);
+        toast.error('Error saving story content');
+        return;
+      }
+    }
+
     if (!validateForm()) {
       toast.error('Please fix the form errors before submitting');
       return;
@@ -159,7 +143,7 @@ export const StoryCreator: React.FC<{
         },
         body: JSON.stringify({
           title: formData.title.trim(),
-          content: formData.content.trim(),
+          content: formData.content, // Convert to string for API
           price_tokens: formData.price_tokens,
           wallet_address: address,
         }),
@@ -175,7 +159,17 @@ export const StoryCreator: React.FC<{
         // Reset form
         setFormData({
           title: '',
-          content: '',
+          content: {
+            time: Date.now(),
+            blocks: [
+              {
+                type: 'paragraph',
+                data: {
+                  text: ''
+                }
+              }
+            ]
+          },
           price_tokens: 0
         });
         setErrors({});
@@ -216,60 +210,229 @@ export const StoryCreator: React.FC<{
     }
   };
 
-  // Preview component
-  const StoryPreview = () => (
-    <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#333333]">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bold text-white">Story Preview</h3>
-        <button
-          onClick={() => setShowPreview(false)}
-          className="text-[#8A8A8A] hover:text-white transition-colors"
-          title="Close preview"
-          aria-label="Close preview"
-        >
-          <Eye className="h-5 w-5" />
-        </button>
-      </div>
-      
-      <div className="prose prose-invert max-w-none text-white">
-        <ReactMarkdown 
-          rehypePlugins={[rehypeRaw, remarkGfm]}
-          components={{
-            img: ({node, ...props}) => (
-              <div className="my-4">
-                <img {...props} className="rounded-lg max-w-full h-auto mx-auto" />
-                {props.title && (
-                  <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
-                )}
-              </div>
-            ),
-            video: ({node, ...props}) => (
-              <div className="my-4">
-                <video {...props} className="rounded-lg w-full" controls />
-                {props.title && (
-                  <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
-                )}
-              </div>
-            ),
-            h1: ({node, ...props}) => <h1 className="text-3xl font-bold my-4" {...props} />,
-            h2: ({node, ...props}) => <h2 className="text-2xl font-bold my-3" {...props} />,
-            h3: ({node, ...props}) => <h3 className="text-xl font-bold my-2" {...props} />,
-            p: ({node, ...props}) => <p className="my-3 leading-relaxed" {...props} />,
-            blockquote: ({node, ...props}) => (
-              <blockquote className="border-l-4 border-[#00A3FF] pl-4 py-2 my-4 italic" {...props} />
-            ),
-            ul: ({node, ...props}) => <ul className="list-disc pl-5 my-3" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-3" {...props} />,
-            strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-            em: ({node, ...props}) => <em className="italic" {...props} />,
-          }}
-        >
-          {formData.content || 'Your story content will appear here...'}
-        </ReactMarkdown>
-      </div>
-    </div>
-  );
+  // Handle editor content changes
+  const handleEditorChange = async (data: OutputData) => {
+    setFormData(prev => ({
+      ...prev,
+      content: data
+    }));
 
+    // Clear content error if any
+    if (errors.content) {
+      setErrors(prev => ({
+        ...prev,
+        content: undefined
+      }));
+    }
+  };
+
+  // Preview component
+  const StoryPreview = () => {
+    // Convert Editor.js data to HTML for preview
+    const renderBlocks = () => {
+      if (!formData.content.blocks) return null;
+
+      return formData.content.blocks.map((block, index) => {
+        switch (block.type) {
+          case 'header': {
+            const level = block.data?.level ?? 2;
+            const HeaderTag = `h${Math.min(Math.max(level, 1), 6)}` as keyof JSX.IntrinsicElements;
+            
+            // Create element with createElement to avoid type issues
+            return React.createElement(
+              HeaderTag,
+              {
+                key: index,
+                className: `my-4 text-white font-bold ${
+                  level === 1 ? 'text-3xl' : 
+                  level === 2 ? 'text-2xl' : 
+                  'text-xl'
+                }`
+              },
+              block.data?.text || ''
+            );
+          }
+          case 'paragraph':
+            return (
+              <p
+                key={index}
+                className="my-3"
+                dangerouslySetInnerHTML={{ __html: block.data.text }}
+              />
+            );
+
+          case 'list':
+            const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+            return (
+              <ListTag key={index} className="my-3 pl-5">
+                {block.data.items.map((item: string, i: number) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ListTag>
+            );
+          case 'quote':
+            return (
+              <blockquote key={index} className="border-l-4 border-[#2A2A2A] pl-4 py-2 my-4 italic">
+                {block.data.text}
+                {block.data.caption && (
+                  <footer className="text-sm mt-2">— {block.data.caption}</footer>
+                )}
+              </blockquote>
+            );
+          case 'code':
+            return (
+              <pre key={index} className="bg-[#1A1A1A] p-4 rounded-lg overflow-x-auto my-4">
+                <code>{block.data.code}</code>
+              </pre>
+            );
+            case 'image': {
+              const imageUrl = block.data?.file?.url || block.data?.url;
+              if (!imageUrl) return null;
+            
+              const { 
+                withBorder, 
+                withBackground, 
+                stretched, 
+                rounded,
+                floatLeft,
+                floatRight
+              } = block.data;
+            
+              // Calculate width class if specified
+              const widthClass = block.data.width ? `w-[${block.data.width}px]` : 'w-full';
+              
+              // Calculate height class if specified
+              const heightClass = block.data.height ? `h-[${block.data.height}px]` : 'h-auto';
+            
+              return (
+                <div
+                  key={index}
+                  className={`
+                    my-6
+                    ${withBackground ? 'bg-[#1A1A1A]/50 p-4 rounded-lg' : ''}
+                    ${stretched ? 'w-full' : 'max-w-3xl mx-auto'}
+                    ${withBorder ? 'border border-gray-600' : ''}
+                    ${floatLeft ? 'float-left mr-4 mb-4' : ''}
+                    ${floatRight ? 'float-right ml-4 mb-4' : ''}
+                    ${!floatLeft && !floatRight ? 'clear-both' : ''}
+                  `}
+                >
+                  <div className="relative">
+                    <img
+                      src={imageUrl}
+                      alt={block.data.caption || 'Story image'}
+                      className={`
+                        ${rounded ? 'rounded-full' : 'rounded-lg'}
+                        ${stretched ? 'w-full' : widthClass}
+                        ${heightClass}
+                        object-cover
+                        ${block.data.fit || 'object-contain'}
+                      `}
+                      style={{
+                        aspectRatio: block.data.aspectRatio || 'auto',
+                        maxHeight: block.data.maxHeight || 'none',
+                        minHeight: block.data.minHeight || 'auto'
+                      }}
+                    />
+                    {block.data.caption && (
+                      <p className={`text-center text-sm text-gray-400 mt-2 ${
+                        floatLeft ? 'text-left' : floatRight ? 'text-right' : 'text-center'
+                      }`}>
+                        {block.data.caption}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+            
+            case 'embed':
+              return (
+                <div key={index} className="my-4">
+                  <div className="relative pt-[56.25%] h-0 overflow-hidden rounded-lg">
+                    <iframe
+                      src={block.data.embed}
+                      title={block.data.caption || block.data.service}
+                      className="absolute top-0 left-0 w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                  {block.data.caption && (
+                    <p className="text-center text-sm text-gray-400 mt-2">
+                      {block.data.caption}
+                    </p>
+                  )}
+                </div>
+              );
+            
+          case 'table':
+            return (
+              <div key={index} className="my-4 overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    {block.data.content.map((row: string[], i: number) => (
+                      <tr key={i}>
+                        {row.map((cell, j) => (
+                          <td key={j} className="border px-4 py-2">{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          case 'warning':
+            return (
+              <div key={index} className="bg-yellow-100 border-l-4 border-yellow-500 p-4 my-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-700">{block.data.title}</h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>{block.data.message}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+            
+          case 'delimiter':
+            return <hr key={index} className="my-8 border-t-2 border-gray-300" />;
+          default:
+            return null;
+        }
+      });
+    };
+
+    return (
+      <div className="bg-[#1A1A1A] rounded-xl p-6 border border-[#333333]">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-bold text-white">Story Preview</h3>
+          <button
+            onClick={() => setShowPreview(false)}
+            className="text-[#8A8A8A] hover:text-white transition-colors"
+            title="Close preview"
+            aria-label="Close preview"
+          >
+            <Eye className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="prose prose-invert max-w-none text-white">
+          {formData.content.blocks && formData.content.blocks.length > 0 ? (
+            renderBlocks()
+          ) : (
+            <p className="text-gray-500">Your story content will appear here...</p>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -321,12 +484,11 @@ export const StoryCreator: React.FC<{
       {/* Content Area */}
       {isConnected && (
         <>
-              {showPreview ? (
+          {showPreview ? (
             <StoryPreview />
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Title Field remains the same */}
-
+              {/* Title Field */}
               <div className="bg-[#222222] rounded-xl p-6 border border-[#333333]">
                 <label className="block text-sm font-medium text-[#AAAAAA] mb-3">
                   <FileText className="h-4 w-4 inline mr-2" />
@@ -353,108 +515,26 @@ export const StoryCreator: React.FC<{
                 </div>
               </div>
 
-              {/* Content Field with formatting toolbar */}
+              {/* Content Field with Editor.js */}
               <div className="text-white bg-[#222222] rounded-xl p-6 border border-[#333333]">
                 <label className="block text-sm font-medium text-[#AAAAAA] mb-3">
                   <PenTool className="h-4 w-4 inline mr-2" />
-                  Story Content (Markdown supported)
+                  Story Content
                 </label>
                 
-                {/* Formatting Toolbar */}
-                <div className="flex flex-wrap gap-2 mb-3 bg-[#1A1A1A] p-2 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('# ', '', 'Main Heading')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Heading 1"
-                  >
-                    <Heading1 className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('## ', '', 'Subheading')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Heading 2"
-                  >
-                    <Heading2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('**', '**', 'bold text')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Bold"
-                  >
-                    <Bold className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('*', '*', 'italic text')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Italic"
-                  >
-                    <Italic className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('> ', '', 'Blockquote')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Quote"
-                  >
-                    <Quote className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('- ', '', 'List item')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Unordered List"
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('1. ', '', 'List item')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Ordered List"
-                  >
-                    <ListOrdered className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('![', `](image-url "optional caption")`, 'Image description')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Image"
-                  >
-                    <ImageIcon className="h-4 w-4" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => insertFormatting('<video src="', `" controls title="optional title"></video>`, 'video-url')}
-                    className="p-2 hover:bg-[#333333] rounded"
-                    title="Video"
-                  >
-                    <Video className="h-4 w-4" />
-                  </button>
+                <div className="bg-[#1A1A1A] rounded-lg overflow-hidden">
+                  <Editor
+                    ref={editorRef}
+                    holder="editorjs"
+                    data={formData.content}
+                    onChange={handleEditorChange}
+                  />
                 </div>
-
-                <textarea
-                  id="story-content"
-                  value={formData.content}
-                  onChange={(e) => handleInputChange('content', e.target.value)}
-                  className={`w-full px-4 py-3 bg-[#1A1A1A] border rounded-lg text-white placeholder-[#666666] focus:outline-none focus:ring-2 focus:ring-[#00A3FF] resize-vertical transition-colors ${
-                    errors.content ? 'border-red-500' : 'border-[#333333]'
-                  }`}
-                  placeholder={`# Welcome to your story!\n\nStart writing here... Use markdown for formatting:\n\n## Subheadings\n**Bold text** *Italic text*\n\n![Image description](image-url "optional caption")\n\n<video src="video-url" controls></video>\n\n- List items\n1. Numbered items\n\n> Blockquotes`}
-                  rows={12}
-                  maxLength={50000}
-                  disabled={isSubmitting}
-                />
+                
                 <div className="flex justify-between items-center mt-2">
                   {errors.content && (
                     <p className="text-red-400 text-sm">{errors.content}</p>
                   )}
-                  <p className="text-xs text-[#666666] ml-auto">
-                    {formData.content.length}/50,000 characters
-                  </p>
                 </div>
               </div>
 
@@ -498,24 +578,16 @@ export const StoryCreator: React.FC<{
                     disabled={isSubmitting}
                   />
                 )}
-                <CustomButton
-                  text={
-                    isSubmitting ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="animate-spin h-4 w-4" />
-                        <span>Submitting...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Send className="h-4 w-4" />
-                        <span>Submit Story</span>
-                      </div>
-                    )
-                  }
-                  onClick={() => {}} // Form submission is handled by onSubmit
-                  className={`${onCancel ? 'flex-1' : 'w-full'} !bg-gradient-to-r !from-[#00A3FF] !to-[#00F0FF] hover:!opacity-90`}
-                  disabled={isSubmitting || !formData.title.trim() || !formData.content.trim()}
-                />
+<CustomButton
+  text={isSubmitting ? "Submitting..." : "Submit Story"}
+  icon={isSubmitting ? Loader2 : Send}
+  onClick={() => {}}
+  className={`${onCancel ? 'flex-1' : 'w-full'} !bg-gradient-to-r !from-[#00A3FF] !to-[#00F0FF] hover:!opacity-90`}
+  disabled={isSubmitting || !formData.title.trim() || 
+    !formData.content.blocks || 
+    formData.content.blocks.length === 0 || 
+    (formData.content.blocks.length === 1 && formData.content.blocks[0].data.text === '')}
+/>
               </div>
 
               {/* Submission Info */}

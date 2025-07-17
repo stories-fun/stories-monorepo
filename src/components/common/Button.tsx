@@ -8,6 +8,7 @@ interface CustomButtonProps {
   onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   className?: string;
   disabled?: boolean;
+  children?: React.ReactNode;
 }
 
 const CustomButton = ({
@@ -16,8 +17,9 @@ const CustomButton = ({
   onClick = () => console.log("Button clicked!"),
   className = "",
   disabled = false,
+  children, // ✅ Add this line
 }: CustomButtonProps) => {
-  const iconOnly = Icon && !text;
+  const iconOnly = Icon && !text && !children;
 
   return (
     <button
@@ -39,9 +41,10 @@ const CustomButton = ({
       )}
     >
       {Icon && <Icon size={24} />}
-      {text && <span>{text}</span>}
+      {children ? <>{children}</> : text && <span>{text}</span>}
     </button>
   );
 };
+
 
 export default CustomButton;

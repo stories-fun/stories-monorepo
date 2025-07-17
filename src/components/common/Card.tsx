@@ -8,6 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { OutputData } from "@editorjs/editorjs";
+import RenderEditorOutput from "../stories/RenderEditorOutput";
+
+
 
 interface CustomCardProps {
   image: string;
@@ -17,7 +21,7 @@ interface CustomCardProps {
   price?: number;
   change?: number;
   author?: string;
-  contentSnippet: string;
+  contentSnippet: OutputData;
   authorImage?: string;
   onClick?: () => void;
   isOwner?: boolean;
@@ -139,19 +143,20 @@ export function CustomCard({
         )}
 
         {/* Snippet Preview */}
-        <div ref={snippetBoxRef} className="relative mb-4 flex-1 min-h-[60px]">
-          <p
-            className="text-sm text-gray-700 overflow-hidden"
-            style={{
-              display: "-webkit-box",
-              WebkitBoxOrient: "vertical",
-              WebkitLineClamp: lineClamp,
-            }}
-          >
-            {cleanMarkdownPreview(contentSnippet)}
-          </p>
-          <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#FFF6C9] to-transparent" />
-        </div>
+{/* Snippet Preview */}
+<div className="relative mb-4 flex-1 min-h-[60px] overflow-hidden">
+  <div
+    className="line-clamp-4 text-sm text-gray-700 prose prose-sm max-w-none"
+    style={{
+      maxHeight: "7.5em", // roughly 4 lines with 1.875em line height
+      overflow: "hidden",
+    }}
+  >
+    <RenderEditorOutput data={contentSnippet} />
+  </div>
+  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#FFF6C9] to-transparent" />
+</div>
+
 
         {/* Button */}
         <div className="mt-auto">
