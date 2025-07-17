@@ -241,12 +241,25 @@ export default function SingleStoryPage() {
   };
 
   // Calculate reading time (rough estimate)
-  const calculateReadingTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const words = content.replace(/<[^>]*>/g, '').split(/\s+/).length;
-    const minutes = Math.ceil(words / wordsPerMinute);
-    return `${minutes} min${minutes > 1 ? 's' : ''}`;
-  };
+  // const calculateReadingTime = (content: string | { blocks: any[] }) => {
+  //   const wordsPerMinute = 200;
+  //   let text = '';
+  
+  //   if (typeof content === 'string') {
+  //     // Treat as raw HTML or plain text
+  //     text = content.replace(/<[^>]*>/g, '');
+  //   } else if (typeof content === 'object' && content.blocks) {
+  //     // Editor.js OutputData format
+  //     text = content.blocks
+  //       .map((block) => block?.data?.text || '')
+  //       .join(' ');
+  //   }
+  
+  //   const words = text.trim().split(/\s+/).length;
+  //   const minutes = Math.ceil(words / wordsPerMinute);
+  //   return `${minutes} min${minutes > 1 ? 's' : ''}`;
+  // };
+  
 
   // Show loading state
   if (loading) {
@@ -267,7 +280,7 @@ export default function SingleStoryPage() {
             <SingleStory
               storyId={story.id} // ✅ Now passing the storyId for comments integration
               title={story.title}
-              timeToRead={calculateReadingTime(story.content)}
+              // timeToRead={calculateReadingTime(story.content)}
               price={story.price_tokens}
               change={4.5} // You might want to calculate this based on historical data
               author={story.author.username}

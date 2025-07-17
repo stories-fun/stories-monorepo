@@ -5,6 +5,11 @@ interface CreateStoryRequestBody {
   content: any;
   price_tokens: number;
   wallet_address: string;
+  token_name?: string;
+  token_symbol?: string;
+  token_img?: any;
+  token_description?: string;
+  banner_video_url?: any;
 }
 
 export async function POST(request: NextRequest) {
@@ -32,7 +37,17 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const body: CreateStoryRequestBody = await request.json();
-    const { title, content, price_tokens, wallet_address } = body;
+    const { 
+      title, 
+      content, 
+      price_tokens, 
+      wallet_address,
+      token_name,
+      token_symbol,
+      token_img,
+      token_description,
+      banner_video_url
+    } = body;
 
     if (!title || !content || !wallet_address) {
       return NextResponse.json(
@@ -91,7 +106,6 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanTitle = title.trim();
-    const cleanContent = JSON.stringify(content);
     const cleanWalletAddress = wallet_address.trim();
 
     const { data: user, error: userError } = await supabase
@@ -121,16 +135,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Prepare the story data object
+    const storyData: any = {
+      author_id: user.id,
+      title: cleanTitle,
+      content: content, // Store as JSONB directly
+      price_tokens: priceTokens,
+      status: 'submitted'
+    };
+
+    // Add optional fields if provided
+    if (token_name) {
+      storyData.token_name = token_name.trim();
+    }
+    
+    if (token_symbol) {
+      storyData.token_symbol = token_symbol.trim();
+    }
+    
+    if (token_img) {
+      storyData.token_img = token_img;
+    }
+    
+    if (token_description) {
+      storyData.token_description = token_description.trim();
+    }
+    
+    if (banner_video_url) {
+      storyData.banner_video_url = banner_video_url;
+    }
+
     const { data: newStory, error: storyError } = await supabase
       .from('stories')
-      .insert({
-        author_id: user.id,
-        title: cleanTitle,
-        content: cleanContent,
-        price_tokens: priceTokens,
-        status: 'submitted'
-      })
-      .select('id, title, content, price_tokens, status, created_at')
+      .insert(storyData)
+      .select('id, title, content, price_tokens, status, created_at, token_name, token_symbol, token_img, token_description, banner_video_url')
       .single();
 
     if (storyError) {
@@ -170,6 +208,11 @@ export async function POST(request: NextRequest) {
             price_tokens: newStory.price_tokens,
             status: newStory.status,
             created_at: newStory.created_at,
+            token_name: newStory.token_name,
+            token_symbol: newStory.token_symbol,
+            token_img: newStory.token_img,
+            token_description: newStory.token_description,
+            banner_video_url: newStory.banner_video_url,
             author: {
               id: user.id,
               username: user.username
@@ -216,7 +259,7 @@ export async function GET() {
       endpoints: {
         'POST /api/stories/create': 'Create a new story',
         'required_fields': ['title', 'content', 'wallet_address'],
-        'optional_fields': ['price_tokens (defaults to 0)']
+        'optional_fields': ['price_tokens (defaults to 0)', 'token_name', 'token_symbol', 'token_img', 'token_description', 'banner_video_url']
       }
     },
     { status: 405 }

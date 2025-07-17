@@ -27,11 +27,13 @@ import {
   ThumbsUp,
   ThumbsDown
 } from 'lucide-react';
+import { OutputData } from "@editorjs/editorjs";
+import RenderEditorOutput from "@/components/stories/RenderEditorOutput";
 
 interface PendingStory {
   id: number;
   title: string;
-  content: string;
+  content: OutputData | string; // Updated to handle both types
   price_tokens: number;
   status: string;
   created_at: string;
@@ -70,6 +72,50 @@ interface AdminResponse {
   message?: string;
 }
 
+// Helper function to safely parse content and extract text
+const extractTextFromContent = (content: OutputData | string): string => {
+  try {
+    let parsedContent: OutputData;
+    
+    if (typeof content === 'string') {
+      parsedContent = JSON.parse(content);
+    } else {
+      parsedContent = content;
+    }
+
+    if (!parsedContent.blocks || !Array.isArray(parsedContent.blocks)) {
+      return '';
+    }
+
+    return parsedContent.blocks
+      .map(block => {
+        switch (block.type) {
+          case 'paragraph':
+            return block.data?.text?.replace(/<[^>]*>/g, '') || '';
+          case 'header':
+            return block.data?.text?.replace(/<[^>]*>/g, '') || '';
+          case 'list':
+            return block.data?.items?.join(' ') || '';
+          case 'quote':
+            return block.data?.text?.replace(/<[^>]*>/g, '') || '';
+          case 'code':
+            return block.data?.code || '';
+          case 'table':
+            return block.data?.content?.flat()?.join(' ') || '';
+          case 'warning':
+            return `${block.data?.title || ''} ${block.data?.message || ''}`;
+          default:
+            return '';
+        }
+      })
+      .filter(text => text.trim().length > 0)
+      .join(' ');
+  } catch (error) {
+    console.error('Error extracting text from content:', error);
+    return 'Content unavailable';
+  }
+};
+
 const StoryReaderModal: React.FC<{
   story: PendingStory | null;
   isOpen: boolean;
@@ -82,11 +128,30 @@ const StoryReaderModal: React.FC<{
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [readingProgress, setReadingProgress] = useState(0);
 
+  // Parse story content safely
+  const parseStoryContent = (): OutputData | null => {
+    if (!story?.content) return null;
+    
+    try {
+      if (typeof story.content === 'object') {
+        return story.content as OutputData;
+      }
+      if (typeof story.content === 'string') {
+        return JSON.parse(story.content) as OutputData;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing story content:', error);
+      return null;
+    }
+  };
+
   // Calculate reading time and word count
-  const getStoryStats = (content: string) => {
-    const wordCount = content.split(/\s+/).length;
+  const getStoryStats = (content: OutputData | string) => {
+    const textContent = extractTextFromContent(content);
+    const wordCount = textContent.split(/\s+/).filter(word => word.length > 0).length;
     const readingTime = Math.ceil(wordCount / 200); // 200 words per minute
-    const charCount = content.length;
+    const charCount = textContent.length;
     return { wordCount, readingTime, charCount };
   };
 
@@ -118,6 +183,7 @@ const StoryReaderModal: React.FC<{
   if (!isOpen || !story) return null;
 
   const stats = getStoryStats(story.content);
+  const parsedContent = parseStoryContent();
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
@@ -189,9 +255,13 @@ const StoryReaderModal: React.FC<{
 
               {/* Story Content */}
               <div className="prose prose-invert max-w-none">
-                <div className="text-[#E0E0E0] leading-relaxed text-lg whitespace-pre-wrap font-serif">
-                  {story.content}
-                </div>
+                {parsedContent ? (
+                  <RenderEditorOutput data={parsedContent} />
+                ) : (
+                  <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <p>Unable to display story content. The content format may be corrupted.</p>
+                  </div>
+                )}
               </div>
 
               {/* Story End Marker */}
@@ -253,8 +323,8 @@ const StoryReaderModal: React.FC<{
                   <span className="text-white">{stats.wordCount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#AAAAAA]">Paragraphs:</span>
-                  <span className="text-white">{story.content.split('\n\n').length}</span>
+                  <span className="text-[#AAAAAA]">Blocks:</span>
+                  <span className="text-white">{parsedContent?.blocks?.length || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#AAAAAA]">Reading Progress:</span>
@@ -357,13 +427,16 @@ const StoryReviewCard: React.FC<{
     return 'Just now';
   };
 
-  const truncateContent = (content: string, maxLength: number = 150) => {
-    if (content.length <= maxLength) return content;
-    return content.substring(0, maxLength).trim() + '...';
+  // Updated truncateContent function to handle both string and object content
+  const truncateContent = (content: OutputData | string, maxLength: number = 150) => {
+    const textContent = extractTextFromContent(content);
+    if (textContent.length <= maxLength) return textContent;
+    return textContent.substring(0, maxLength).trim() + '...';
   };
 
-  const getWordCount = (content: string) => {
-    return content.split(/\s+/).length;
+  const getWordCount = (content: OutputData | string) => {
+    const textContent = extractTextFromContent(content);
+    return textContent.split(/\s+/).filter(word => word.length > 0).length;
   };
 
   return (

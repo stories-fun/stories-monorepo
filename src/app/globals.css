@@ -3,6 +3,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --font-instrument-sans: "Instrument Sans", sans-serif;
 }
 
 @theme inline {
@@ -21,7 +22,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-instrument-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-instrument-sans);
 }
 
 
@@ -29,6 +30,23 @@ body {
   clip-path: polygon(100% 0%, 100% 100%, 0% 0%);
 }
 
+
+.wavy {
+  --mask:
+    radial-gradient(26.85px at 50% calc(100% - 37.4px), #000 99%, transparent 100%) calc(50% - 44px) 0/88px 100%,
+    radial-gradient(26.85px at 50% calc(100% + 15.4px), transparent 99%, #000 100%) 50% calc(100% - 22px)/88px 100% repeat-x;
+  -webkit-mask: var(--mask);
+  mask: var(--mask);
+}
+
+.wavyimage {
+  background: #FFF6C9;
+  --mask:
+    radial-gradient(9.77px at 50% 13.6px,#000 99%,#0000 101%) calc(50% - 16px) 0/32px 100%,
+    radial-gradient(9.77px at 50% -5.6px,#0000 99%,#000 101%) 50% 8px/32px 100% repeat-x;
+  -webkit-mask: var(--mask);
+          mask: var(--mask);
+}
 
 /* Minimal styling for Editor.js container */
 .editorjs-container {

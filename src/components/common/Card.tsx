@@ -146,7 +146,7 @@ export function CustomCard({
 {/* Snippet Preview */}
 <div className="relative mb-4 flex-1 min-h-[60px] overflow-hidden">
   <div
-    className="line-clamp-4 text-sm text-gray-700 prose prose-sm max-w-none"
+    className="line-clamp-4 text-sm text-[#141414] prose prose-sm max-w-none"
     style={{
       maxHeight: "7.5em", // roughly 4 lines with 1.875em line height
       overflow: "hidden",
