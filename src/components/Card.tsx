@@ -131,7 +131,7 @@ export function CustomCard({
         {/* Snippet Preview (dynamic clamp) */}
         <div ref={snippetBoxRef} className="relative mb-4 flex-1">
           <p
-            className="text-sm text-gray-700 overflow-hidden"
+            className="text-sm text-[#141414] overflow-hidden"
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",

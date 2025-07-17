@@ -52,7 +52,7 @@ export default function StoryModal({
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-150 px-4">
       <div className="relative">
         {/* Modal card */}
-        <div className="bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg relative shadow-xl border border-[#141414]">
+        <div className="bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-2xl relative shadow-xl border border-[#141414]">
           {/* Balloon canvas container */}
           {type === "unlocked" && (
             <div
@@ -93,18 +93,20 @@ export default function StoryModal({
                   />
                 </div>
 
-                <p className="text-sm leading-relaxed mb-6">
-                  {story.contentSnippet
-                    ? story.contentSnippet
-                    : "This is a snippet of the story. Click below to read the full story."}
-                </p>
-
-                <div className="flex justify-center">
-                  <CustomButton
-                    text="Read full story"
-                    onClick={() => console.log("Reading full story")}
-                    className="justify-center"
-                  />
+                <div className="relative mb-6">
+                  <div className="absolute bottom-0 left-0 w-full flex justify-center z-10">
+                    <CustomButton
+                      text="Read full story"
+                      onClick={() => console.log("Reading full story")}
+                      className="justify-center"
+                    />
+                  </div>
+                  <p className="text-sm leading-relaxed mt-12">
+                    {story.contentSnippet
+                      ? story.contentSnippet
+                      : "This is a snippet of the story. Click below to read the full story."}
+                  </p>
+                  <div className="absolute bottom-0 left-0 w-full h-[25%] bg-gradient-to-t from-[#FFEEBA] to-transparent pointer-events-none"></div>
                 </div>
               </>
             )}
@@ -120,7 +122,7 @@ export default function StoryModal({
                 <CustomButton
                   text="Start reading"
                   onClick={() => console.log("Start reading")}
-                  className="mt-6 w-full justify-center"
+                  className="mt-6 w-1/3 justify-center"
                 />
               </div>
             )}
