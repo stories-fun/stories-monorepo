@@ -148,6 +148,20 @@ export default function Home() {
         </p>
       </section>
 
+      {/* Trailer video section */}
+      <section className="mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 flex justify-center">
+        <div className="relative w-full max-w-[700px] h-[340px] sm:h-[400px]">
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/9zfQ3J67AZ8"
+            title="Stories Trailer"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+      </section>
+
       {/* Carousel Section with Scroll Animation */}
       <section
         className={`mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 transition-transform duration-1000 ease-out`}
