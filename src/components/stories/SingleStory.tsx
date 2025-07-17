@@ -11,6 +11,9 @@ import { useComments, Comment } from '@/hooks/useComments';
 import { useAppKitAccount } from '@reown/appkit/react';
 import { toast } from 'sonner';
 
+import RenderEditorOutput from "@/components/stories/RenderEditorOutput";
+import { OutputData } from "@editorjs/editorjs";
+
 interface SingleStoryProps {
   storyId: number;
   title: string;
@@ -452,67 +455,11 @@ export function SingleStory({
 
         {/* Story Content */}
         {storyContent && (
-          <div className="mt-4 mb-5 space-y-4 pb-10">
-            <ReactMarkdown 
-              rehypePlugins={[rehypeRaw, remarkGfm]}
-              components={{
-                h1: ({node, ...props}) => <h1 className="text-3xl font-bold my-6" {...props} />,
-                h2: ({node, ...props}) => <h2 className="text-2xl font-bold my-5" {...props} />,
-                h3: ({node, ...props}) => <h3 className="text-xl font-bold my-4" {...props} />,
-                h4: ({node, ...props}) => <h4 className="text-lg font-bold my-3" {...props} />,
-                p: ({node, ...props}) => <p className="text-base leading-relaxed my-3" {...props} />,
-                img: ({node, ...props}) => (
-                  <div className="my-6">
-                    <img 
-                      {...props} 
-                      className="rounded-lg max-w-full h-auto mx-auto" 
-                      alt={props.alt || 'Story image'}
-                    />
-                    {props.title && (
-                      <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
-                    )}
-                  </div>
-                ),
-                video: ({node, ...props}) => (
-                  <div className="my-6">
-                    <video 
-                      {...props} 
-                      className="rounded-lg w-full" 
-                      controls 
-                    />
-                    {props.title && (
-                      <p className="text-center text-sm text-gray-400 mt-2">{props.title}</p>
-                    )}
-                  </div>
-                ),
-                blockquote: ({node, ...props}) => (
-                  <blockquote className="border-l-4 border-[#00A3FF] pl-4 py-2 my-4 italic bg-[#1A1A1A]/50" {...props} />
-                ),
-                ul: ({node, ...props}) => <ul className="list-disc pl-5 my-3 space-y-1" {...props} />,
-                ol: ({node, ...props}) => <ol className="list-decimal pl-5 my-3 space-y-1" {...props} />,
-                li: ({node, ...props}) => <li className="pl-2" {...props} />,
-                strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                em: ({node, ...props}) => <em className="italic" {...props} />,
-                a: ({node, ...props}) => (
-                  <a 
-                    {...props} 
-                    className="text-[#00A3FF] hover:underline" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                  />
-                ),
-                code: ({node, ...props}) => (
-                  <code className="bg-[#1A1A1A] px-2 py-1 rounded text-sm font-mono" {...props} />
-                ),
-                pre: ({node, ...props}) => (
-                  <pre className="bg-[#1A1A1A] p-4 rounded-lg overflow-x-auto my-4" {...props} />
-                ),
-              }}
-            >
-              {storyContent}
-            </ReactMarkdown>
-          </div>
-        )}
+  <div className="mt-4 mb-5 space-y-4 pb-10">
+    <RenderEditorOutput data={JSON.parse(storyContent) as OutputData} />
+  </div>
+)}
+
 
         {/* Comments Section */}
         <div className="mt-8 mb-6 pb-6">

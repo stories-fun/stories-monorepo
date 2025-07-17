@@ -11,6 +11,7 @@ import { balloons } from 'balloons-js';
 import CustomButton from '@/components/common/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import RenderEditorOutput from '@/components/stories/RenderEditorOutput';
 
 interface Author {
   id: number;
@@ -365,25 +366,19 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 
             {/* Enhanced Markdown Preview */}
             <div className="mb-6 max-h-[200px] overflow-y-auto">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  // Strip out all complex markdown for the preview
-                  h1: ({node, ...props}) => <span className="font-bold text-lg" {...props} />,
-                  h2: ({node, ...props}) => <span className="font-bold" {...props} />,
-                  h3: ({node, ...props}) => <span className="font-bold" {...props} />,
-                  p: ({node, ...props}) => <p className="text-sm text-gray-700 mb-2 leading-relaxed" {...props} />,
-                  img: () => null,
-                  video: () => null,
-                  a: ({node, ...props}) => <span className="text-blue-600" {...props} />,
-                  strong: ({node, ...props}) => <span className="font-semibold" {...props} />,
-                  em: ({node, ...props}) => <span className="italic" {...props} />,
-                  blockquote: () => null,
-                  code: () => null,
-                }}
-              >
-                {cleanMarkdownPreview(story.content)}
-              </ReactMarkdown>
+<div className="relative mb-4 flex-1 min-h-[60px] overflow-hidden">
+  <div
+    className="line-clamp-4 text-sm text-gray-700 prose prose-sm max-w-none"
+    style={{
+      maxHeight: "7.5em", // roughly 4 lines with 1.875em line height
+      overflow: "hidden",
+    }}
+  >
+    <RenderEditorOutput data={typeof story.content === 'string' ? JSON.parse(story.content) : story.content}/>
+  </div>
+  <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-[#FFF6C9] to-transparent" />
+</div>
+
             </div>
 
             <div className="flex justify-center">

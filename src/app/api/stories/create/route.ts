@@ -1,22 +1,17 @@
-// src/app/api/stories/create/route.ts
-// API for creating/posting new stories
-
 import { NextRequest, NextResponse } from 'next/server';
 
 interface CreateStoryRequestBody {
   title: string;
-  content: string;
+  content: any;
   price_tokens: number;
   wallet_address: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // Get environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // Check if environment variables exist
     if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
         {
@@ -33,14 +28,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Supabase client inside the function
     const { createClient } = await import('@supabase/supabase-js');
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const body: CreateStoryRequestBody = await request.json();
     const { title, content, price_tokens, wallet_address } = body;
 
-    // Validate required fields
     if (!title || !content || !wallet_address) {
       return NextResponse.json(
         {
@@ -52,22 +45,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate field formats and constraints
-    if (typeof title !== 'string' || title.trim().length === 0) {
-      return NextResponse.json(
-        {
-          error: 'Invalid title',
-          message: 'Title must be a non-empty string'
-        },
-        { status: 400 }
-      );
-    }
-
-    if (typeof content !== 'string' || content.trim().length === 0) {
+    if (
+      typeof content !== 'object' ||
+      !Array.isArray(content.blocks) ||
+      content.blocks.length === 0
+    ) {
       return NextResponse.json(
         {
           error: 'Invalid content',
-          message: 'Content must be a non-empty string'
+          message: 'Content must be a non-empty Editor.js OutputData object',
         },
         { status: 400 }
       );
@@ -83,7 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (content.trim().length > 50000) {
+    if (JSON.stringify(content).length > 50000) {
       return NextResponse.json(
         {
           error: 'Content too long',
@@ -93,7 +79,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate price_tokens
     const priceTokens = typeof price_tokens === 'number' ? price_tokens : parseFloat(price_tokens as any);
     if (isNaN(priceTokens) || priceTokens < 0) {
       return NextResponse.json(
@@ -105,12 +90,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Clean the input data
     const cleanTitle = title.trim();
-    const cleanContent = content.trim();
+    const cleanContent = JSON.stringify(content);
     const cleanWalletAddress = wallet_address.trim();
 
-    // First, get the user_id from wallet_address
     const { data: user, error: userError } = await supabase
       .from('user')
       .select('id, username')
@@ -138,7 +121,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the story
     const { data: newStory, error: storyError } = await supabase
       .from('stories')
       .insert({
@@ -146,7 +128,7 @@ export async function POST(request: NextRequest) {
         title: cleanTitle,
         content: cleanContent,
         price_tokens: priceTokens,
-        status: 'submitted' // Initial status
+        status: 'submitted'
       })
       .select('id, title, content, price_tokens, status, created_at')
       .single();
@@ -162,7 +144,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a story submission record
     const { data: submission, error: submissionError } = await supabase
       .from('story_submissions')
       .insert({
@@ -175,9 +156,6 @@ export async function POST(request: NextRequest) {
 
     if (submissionError) {
       console.error('Database error creating submission:', submissionError);
-      // If submission creation fails, we might want to delete the story or log this issue
-      // For now, we'll proceed but log the error
-      console.error('Warning: Story created but submission record failed');
     }
 
     return NextResponse.json(

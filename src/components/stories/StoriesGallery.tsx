@@ -152,7 +152,7 @@ const StoryCard: React.FC<{
   change={4.5}
   author={story.author.username}
   authorImage={story.author.avatar_url ? `https://ipfs.erebrus.io/ipfs/${story.author.avatar_url}` : "/pfp.jpeg"}
-  contentSnippet={story.content.substring(0, )}
+  contentSnippet={typeof story.content === 'string' ? JSON.parse(story.content) : story.content}
   isOwner={isOwner}
   onClick={() => {
     // Handle stopPropagation earlier in the wrapping element if needed
