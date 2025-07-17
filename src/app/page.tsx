@@ -1,6 +1,7 @@
 "use client";
 
 import NewCarousel from "@/components/common/Carousel";
+import ModernVideoSection from "@/components/common/ModernVideoSection";
 import Image from "next/image";
 
 import { useEffect, useState } from "react";
@@ -9,8 +10,7 @@ const sampleCarouselItems = [
   {
     id: 1,
     image: "/lion.webp",
-    title:
-      "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power",
+    title: "Tiffany Story",
     url: "https://medium.com/@jeyprox/building-a-fully-customisable-carousel-slider-with-swipe-gestures-navigation-and-custom-cursor-4e986ccbd08f",
   },
   {
@@ -118,7 +118,7 @@ export default function Home() {
           >
             <Image
               src="/adi.png"
-              alt="ADI"
+              alt="Lady"
               fill
               className="object-cover"
             />
@@ -150,6 +150,24 @@ export default function Home() {
         </p>
       </section>
 
+      {/* Trailer video section */}
+{/* Modern Trailer video section */}
+<section className="mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 flex justify-center">
+  <ModernVideoSection scrollPosition={scrollPosition} />
+</section>
+
+{/* <section className="mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 flex justify-center">
+        <div className="relative w-full max-w-[700px] h-[340px] sm:h-[400px]">
+          <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/9zfQ3J67AZ8"
+            title="Stories Trailer"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
+        </div>
+      </section> */}
       {/* Carousel Section with Scroll Animation */}
       <section
         className={`mt-16 sm:mt-[200px] w-full max-w-[1400px] px-4 transition-transform duration-1000 ease-out`}

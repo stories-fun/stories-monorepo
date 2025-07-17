@@ -304,7 +304,7 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 
       <div className="relative">
         {/* Main Modal Card */}
-        <div className="bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg relative shadow-xl border border-[#141414]">
+        <div className="bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-2xl relative shadow-xl border border-[#141414]">
           <div className="relative z-10">
             {/* Story Content */}
             <h2 className="font-bold text-xl sm:text-2xl mb-4">
@@ -380,8 +380,8 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 </div>
 
             </div>
-
-            <div className="flex justify-center">
+            <div className='relative mb-6'>
+            <div className="absolute bottom-0 left-0 w-full flex justify-center z-10">
               <CustomButton
                 text={
                   isCheckingPurchase ? (
@@ -395,10 +395,11 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
                 }
                 onClick={handleReadFullStory}
                 disabled={isCheckingPurchase || !requiredTokens}
-                className={`w-full max-w-xs text-sm py-2 px-5 ${
+                className={`justify-center ${
                   isCheckingPurchase ? 'opacity-75' : ''
                 }`}
               />
+            </div>
             </div>
           </div>
         </div>

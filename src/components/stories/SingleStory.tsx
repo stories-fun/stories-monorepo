@@ -22,7 +22,7 @@ interface SingleStoryProps {
   change?: number;
   author?: string;
   authorImage?: string;
-  storyContent?: string;
+  storyContent?: OutputData | string; // Accept both OutputData and string
 }
 
 interface ThemeContextType {
@@ -398,22 +398,45 @@ export function SingleStory({
     await toggleLike(commentId);
   };
 
+  // Helper function to safely parse story content
+  const parseStoryContent = (): OutputData | null => {
+    if (!storyContent) return null;
+    
+    try {
+      // If it's already an object, return it directly
+      if (typeof storyContent === 'object') {
+        return storyContent as OutputData;
+      }
+      
+      // If it's a string, try to parse it
+      if (typeof storyContent === 'string') {
+        return JSON.parse(storyContent) as OutputData;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error parsing story content:', error);
+      return null;
+    }
+  };
+
   // Get current user's avatar (you might want to fetch this from your user context)
   const currentUserAvatar = "/pfp.jpeg"; // Default fallback
-
+  const parsedContent = parseStoryContent();
   return (
     <div className={`max-w-[770px] mt-20 relative ${bgColor} ${textColor}`}>
       {/* Author Info */}
       <div className="relative w-full">
         {author && authorImage && (
-          <div className="absolute top-0 left-0 bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10">
+          <div className="absolute top-[-15px] left-[-20px]  bg-[#141414] flex items-center gap-2 pr-3 rounded-br-xl z-10">
             <div className="relative w-12 h-12 flex-shrink-0">
               <Image
                 src={authorImage}
                 alt={author}
-                fill
+          
                 className="rounded-full object-cover"
-                sizes="48px"
+                width={40}
+                height={40}
               />
             </div>
             <span className="text-sm font-semibold text-white">{author}</span>
@@ -454,11 +477,21 @@ export function SingleStory({
         </div>
 
         {/* Story Content */}
-        {storyContent && (
-  <div className="mt-4 mb-5 space-y-4 pb-10">
-    <RenderEditorOutput data={JSON.parse(storyContent) as OutputData} />
-  </div>
-)}
+
+        {parsedContent && (
+          <div className="mt-4 mb-5 space-y-4 pb-10">
+            <RenderEditorOutput data={parsedContent} />
+          </div>
+        )}
+
+        {/* Show error message if content couldn't be parsed */}
+        {storyContent && !parsedContent && (
+          <div className="mt-4 mb-5 space-y-4 pb-10">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              <p>Unable to display story content. The content format may be corrupted.</p>
+            </div>
+          </div>
+        )}
 
 
         {/* Comments Section */}

@@ -85,12 +85,12 @@ const generateCoverImage = (title: string, index: number) => {
 };
 
 // Calculate reading time based on content length
-const calculateReadingTime = (content: string): string => {
-  const wordsPerMinute = 200;
-  const wordCount = content.split(' ').length;
-  const minutes = Math.ceil(wordCount / wordsPerMinute);
-  return `${minutes} min${minutes > 1 ? 's' : ''}`;
-};
+// const calculateReadingTime = (content: string): string => {
+//   const wordsPerMinute = 200;
+//   const wordCount = content.split(' ').length;
+//   const minutes = Math.ceil(wordCount / wordsPerMinute);
+//   return `${minutes} min${minutes > 1 ? 's' : ''}`;
+// };
 
 // Generate rating (placeholder since not in schema)
 const generateRating = (storyId: number): number => {
@@ -107,7 +107,7 @@ const StoryCard: React.FC<{
 }> = ({ story, index, onReadStory, isOwner = false }) => {
   const router = useRouter();
   const coverGradient = generateCoverImage(story.title, index);
-  const readingTime = calculateReadingTime(story.content);
+  // const readingTime = calculateReadingTime(story.content);
   const rating = generateRating(story.id);
 
   const getInitials = (name: string): string => {
@@ -147,7 +147,7 @@ const StoryCard: React.FC<{
       <CustomCard
   image={"/fallback.png"} // You can enhance this later
   title={story.title.substring(0, 35)}
-  timeToRead={readingTime}
+  // timeToRead={readingTime}
   price={story.price_tokens}
   change={4.5}
   author={story.author.username}
