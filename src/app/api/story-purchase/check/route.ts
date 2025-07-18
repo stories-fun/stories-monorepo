@@ -11,6 +11,13 @@ export async function POST(req: NextRequest) {
   try {
     const { story_id, wallet_address } = await req.json();
 
+    if (!story_id || !wallet_address) {
+      return NextResponse.json(
+        { error: 'Missing story_id or wallet_address' },
+        { status: 400 }
+      );
+    }
+
     const { data, error } = await supabase
       .from('story_purchases')
       .select('*')
@@ -22,12 +29,18 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     return NextResponse.json({
+      success: true,
+      hasAccess: !!data,
       purchase: data || null,
     });
   } catch (error) {
     console.error('Error checking story purchase:', error);
     return NextResponse.json(
-      { error: 'Failed to check story purchase' },
+      { 
+        success: false,
+        error: 'Failed to check story purchase',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

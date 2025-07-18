@@ -24,7 +24,7 @@ const supabase = createClient(
 const STORIES_TOKEN_ADDRESS = new PublicKey('EvA88escD87zrzG7xo8WAM8jW6gJ5uQfeLL8Fj6DUZ2Q');
 const TREASURY_ADDRESS = process.env.NEXT_PUBLIC_TREASURY_ADDRESS!;
 const STORIES_DECIMALS = 9;
-const USD_PRICE = 0.000001; // Fixed $9 USD payment
+// const USD_PRICE = 9; // Fixed $9 USD payment
 const PRIORITY_FEE_LAMPORTS = 100000; // 0.0001 SOL for priority fee
 const MAX_RETRIES = 3;
 const RPC_TIMEOUT = 15000; // 15 seconds
@@ -147,6 +147,20 @@ export async function POST(req: NextRequest) {
 
     if (step === 'create') {
       try {
+
+        const { data: story, error: storyError } = await supabase
+      .from('stories')
+      .select('price_tokens')
+      .eq('id', story_id)
+      .single();
+
+    if (storyError || !story) {
+      return NextResponse.json({ success: false, error: 'STORY_NOT_FOUND' }, { status: 404 });
+    }
+    const USD_PRICE = parseFloat(story.price_tokens);
+    if (isNaN(USD_PRICE) || USD_PRICE <= 0) {
+      return NextResponse.json({ success: false, error: 'INVALID_PRICE' }, { status: 400 });
+    } 
         // 1. Get current STORIES price and calculate required tokens
         const storiesPrice = await getStoriesPriceInUSD();
         const price_tokens = USD_PRICE / storiesPrice;
@@ -274,6 +288,21 @@ export async function POST(req: NextRequest) {
       }
     
       try {
+        const { data: story, error: storyError } = await supabase
+        .from('stories')
+        .select('price_tokens')
+        .eq('id', story_id)
+        .single();
+  
+      if (storyError || !story) {
+        return NextResponse.json({ success: false, error: 'STORY_NOT_FOUND' }, { status: 404 });
+      }
+  
+      const USD_PRICE = parseFloat(story.price_tokens);
+      if (isNaN(USD_PRICE) || USD_PRICE <= 0) {
+        return NextResponse.json({ success: false, error: 'INVALID_PRICE' }, { status: 400 });
+      }
+  
         // Deserialize the signed transaction
         const signedTx = Transaction.from(Buffer.from(signed_tx_base64, 'base64'));
     

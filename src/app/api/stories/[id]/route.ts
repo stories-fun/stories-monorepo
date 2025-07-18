@@ -223,7 +223,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               username: author.username,
               wallet_address: author.wallet_address
             } : null,
-            content_preview: story.content.substring(0, 200) + '...'
+            content_preview: typeof story.content === 'string' 
+  ? story.content.substring(0, 200) + '...'
+  : JSON.stringify(story.content).substring(0, 200) + '...'
           },
           purchase_required: true,
           access_type: accessValidation.accessType

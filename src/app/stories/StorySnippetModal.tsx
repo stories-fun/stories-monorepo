@@ -144,6 +144,19 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 
     setIsCheckingPurchase(true);
     try {
+
+      if (story.price_tokens <= 0) {
+        const freeResponse = await axios.post('/api/story-purchase/free', {
+          story_id: story.id,
+          wallet_address: address,
+        });
+        
+        if (freeResponse.data.success) {
+          onReadFullStory();
+          return;
+        }
+      }
+
       const response = await axios.post('/api/story-purchase/check', {
         story_id: story.id,
         wallet_address: address,
@@ -155,8 +168,13 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
         setShowPaymentModal(true);
       }
     } catch (error) {
-      console.error('Error checking purchase:', error);
+       console.error('Error checking purchase:', error);
+    if (axios.isAxiosError(error) && error.response?.data?.error === 'NOT_FREE') {
+      // Story is not free, proceed to payment
+      setShowPaymentModal(true);
+    } else {
       toast.error('Failed to check story purchase status');
+    }
     } finally {
       setIsCheckingPurchase(false);
     }
@@ -164,9 +182,27 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 
   const handlePayment = async () => {
     if (!address || !isConnected || !requiredTokens) return;
+
+
     setIsProcessingPayment(true);
   
     try {
+
+      if (story.price_tokens <= 0) {
+        // Handle free story
+        const response = await axios.post('/api/story-purchase/free', {
+          story_id: story.id,
+          wallet_address: address,
+        });
+        
+        if (response.data.success) {
+          toast.success('Story unlocked!');
+          setShowPaymentModal(false);
+          onReadFullStory();
+          return;
+        }
+      }
+  
       // Step 1: Request unsigned tx from backend
       const createTxRes = await axios.post('/api/story-purchase/pay', {
         step: 'create',
@@ -261,12 +297,23 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
       }
   
       if (confirmRes.data.success) {
-        toast.success('Payment successful! You can now read the full story');
-        setShowPaymentModal(false);
-        onReadFullStory();
-      } else {
-        throw new Error(confirmRes.data.error || 'Payment failed');
-      }
+        toast.success('Payment successful! Verifying access...');
+      
+        // Add a small delay to allow Supabase to update
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Verify the purchase was recorded
+        const verification = await axios.post('/api/story-purchase/check', {
+          story_id: story.id,
+          wallet_address: address,
+        });
+  
+        if (verification.data.hasAccess) {
+          setShowPaymentModal(false);
+          onReadFullStory();
+        } else {
+          throw new Error('Purchase not recorded yet. Please refresh and try again.');
+        }}
   
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -356,12 +403,14 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
               </span>
               
               <button
-                onClick={() => setShowPaymentModal(true)}
-                className="rounded-lg border-none bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-sm text-[#141414] flex items-center gap-1 px-2 py-1"
-              >
-                <Gift size={16} />
-                {requiredTokens ? `${requiredTokens.toFixed(2)} STORIES` : '...'}
-              </button>
+  onClick={() => setShowPaymentModal(true)}
+  className="rounded-lg border-none bg-[#FFDE7A] hover:bg-[#ffd07a] active:bg-yellow-600 focus:ring-[#ffe79d] text-sm text-[#141414] flex items-center gap-1 px-2 py-1"
+>
+  <Gift size={16} />
+  {story.price_tokens > 0 
+    ? `${(story.price_tokens / (storiesPrice || 1)).toFixed(2)} STORIES` 
+    : 'FREE'}
+</button>
             </div>
 
             {/* Enhanced Markdown Preview */}
@@ -444,7 +493,7 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
       )}
 
       {/* Payment Modal */}
-      {showPaymentModal && requiredTokens && (
+      {showPaymentModal &&  (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="relative bg-[#FFEEBA] text-[#141414] p-6 sm:p-8 w-full max-w-lg rounded-xl shadow-2xl border-2 border-[#141414]">
             {/* Close button (top-right) */}
@@ -463,18 +512,24 @@ export const StorySnippetModal: React.FC<StorySnippetModalProps> = ({
 
             {/* Price details */}
             <div className="mb-6 p-4 bg-[#FFDE7A]/30 rounded-lg border border-[#FFDE7A]/50">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Current Rate:</span>
-                <span className="font-mono font-bold">${storiesPrice?.toFixed(4)} per STORY</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">You Pay:</span>
-                <div className="text-right">
-                  <p className="font-mono font-bold text-lg">{requiredTokens.toFixed(4)} STORIES</p>
-                  <p className="text-xs">≈ $9.00 USD</p>
-                </div>
-              </div>
-            </div>
+  <div className="flex justify-between items-center mb-2">
+    <span className="text-sm font-medium">Current Rate:</span>
+    <span className="font-mono font-bold">${storiesPrice?.toFixed(4)} per STORY</span>
+  </div>
+  <div className="flex justify-between items-center">
+    <span className="text-sm font-medium">You Pay:</span>
+    <div className="text-right">
+      <p className="font-mono font-bold text-lg">
+        {story.price_tokens > 0 
+          ? `${(story.price_tokens / (storiesPrice || 1)).toFixed(4)} STORIES` 
+          : 'FREE'}
+      </p>
+      <p className="text-xs">
+        ≈ ${story.price_tokens.toFixed(2)} USD
+      </p>
+    </div>
+  </div>
+</div>
 
             {/* Market notice */}
             <div className="flex items-start gap-2 mb-6 text-xs text-[#141414]/80">
