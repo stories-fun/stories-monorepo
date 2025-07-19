@@ -11,8 +11,11 @@ import { Wallet } from "lucide-react";
 export interface CarouselItem {
   title: string;
   url: string;
-  image: string;
+  image?: string;
   id?: string | number;
+  videoLink?: string;
+  comingSoon?: boolean;
+  comingSoonTitle?: string;
 }
 
 interface NewCarouselProps {
@@ -44,6 +47,15 @@ export default function NewCarousel({
     };
   }, [emblaApi]);
 
+  const getYouTubeThumbnail = (url: string): string | null => {
+    const match = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    );
+    return match
+      ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
+      : null;
+  };
+
   return (
     <div
       className={cn("relative w-full flex flex-col items-center", className)}
@@ -51,57 +63,34 @@ export default function NewCarousel({
       <div className="relative w-full max-w-6xl mx-auto">
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
-            {items.map((item, index) => (
-              <div
-                className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4 flex flex-col items-center"
-                key={item.id ? `item-${item.id}` : `item-${index}`}
-              >
-                {/* Title above image */}
+            {items.map((item, index) => {
+              const mainImage =
+                (item.videoLink && getYouTubeThumbnail(item.videoLink)) ||
+                item.image ||
+                "/placeholder.jpg";
+
+              const isComingSoon = item.comingSoon;
+              const titleText =
+                isComingSoon && item.comingSoonTitle
+                  ? item.comingSoonTitle
+                  : isComingSoon
+                  ? "To be announced"
+                  : item.title;
+
+              return (
                 <div
-                  className={`mb-2 px-4 py-3 text-[#141414] bg-white transition-opacity duration-500 h-10 flex items-center relative ${
-                    activeIndex === index ? "opacity-100" : "opacity-50"
-                  }`}
-                  style={{ marginRight: "25%" }}
+                  className="flex-grow-0 flex-shrink-0 basis-full md:basis-1/2 lg:basis-1/3 px-4 flex flex-col items-center"
+                  key={item.id ? `item-${item.id}` : `item-${index}`}
                 >
-                  {/* Folded corner */}
-                  <div className="absolute top-[-1px] right-0 w-3 h-3 z-1">
-                    <div
-                      className="absolute top-0 right-0 w-full h-full shadow-md"
-                      style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
-                    />
-                    <div
-                      className="absolute top-0 right-0 w-full h-full border-l border-b bg-[#141414] shadow-md"
-                      style={{ clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)" }}
-                    />
-                    <div
-                      className="absolute top-0 right-0 w-full h-full bg-white shadow-md"
-                      style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
-                    />
-                    <div
-                      className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-white shadow-md"
-                      style={{ clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)" }}
-                    />
-                  </div>
-
-                  <p className="text-base md:text-lg font-semibold leading-snug">
-                    {item.title}
-                  </p>
-                </div>
-
-                <motion.div
-                  className="w-full"
-                  animate={{
-                    scale: activeIndex === index ? 1 : 0.85,
-                    opacity: activeIndex === index ? 1 : 0.5,
-                  }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                >
+                  {/* Title above image */}
                   <div
-                    className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
-                    style={{ aspectRatio: "16/9" }}
+                    className={`mb-2 px-4 py-3 text-[#141414] bg-white transition-opacity duration-500 h-10 flex items-center relative ${
+                      activeIndex === index ? "opacity-100" : "opacity-50"
+                    }`}
+                    style={{ marginRight: "25%" }}
                   >
                     {/* Folded corner */}
-                    <div className="absolute top-[-1px] right-0 w-10 h-10 z-1">
+                    <div className="absolute top-[-1px] right-0 w-3 h-3 z-1">
                       <div
                         className="absolute top-0 right-0 w-full h-full shadow-md"
                         style={{
@@ -115,43 +104,97 @@ export default function NewCarousel({
                         }}
                       />
                       <div
-                        className="absolute top-0 right-0 w-full h-full bg-[#FFF6C9] shadow-md"
+                        className="absolute top-0 right-0 w-full h-full bg-white shadow-md"
                         style={{
                           clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
                         }}
                       />
                       <div
-                        className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-[#FFF6C9] shadow-md"
+                        className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-white shadow-md"
                         style={{
                           clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
                         }}
                       />
                     </div>
 
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                    <p className="text-base md:text-lg font-semibold leading-snug truncate">
+                      {titleText}
+                    </p>
                   </div>
-                </motion.div>
 
-                {/* Button below image — only on active slide */}
-                {activeIndex === index && (
-                  <div className="mt-4">
-                    <CustomButton
-                      text="Unlock Stories"
-                      icon={Wallet}
-                      onClick={() =>
-                        // open url in new tab
-                        window.open(item.url, "_blank")
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+                  <motion.div
+                    className="w-full"
+                    animate={{
+                      scale: activeIndex === index ? 1 : 0.85,
+                      opacity: activeIndex === index ? 1 : 0.5,
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  >
+                    <div
+                      className="relative w-full h-full overflow-hidden bg-[#141414] transition-all duration-500 ease-in-out"
+                      style={{ aspectRatio: "16/9" }}
+                    >
+                      {/* Folded corner */}
+                      <div className="absolute top-[-1px] right-0 w-10 h-10 z-1">
+                        <div
+                          className="absolute top-0 right-0 w-full h-full shadow-md"
+                          style={{
+                            clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)",
+                          }}
+                        />
+                        <div
+                          className="absolute top-0 right-0 w-full h-full border-l border-b bg-[#141414] shadow-md"
+                          style={{
+                            clipPath: "polygon(100% 100%, 1000% 0%, 0% 0%)",
+                          }}
+                        />
+                        <div
+                          className="absolute top-0 right-0 w-full h-full bg-[#FFF6C9] shadow-md"
+                          style={{
+                            clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
+                          }}
+                        />
+                        <div
+                          className="absolute top-0 right-0 w-full h-full border-l border-b border-[#141414] bg-[#FFF6C9] shadow-md"
+                          style={{
+                            clipPath: "polygon(0% 0%, 0% 100%, 100% 100%)",
+                          }}
+                        />
+                      </div>
+
+                      <img
+                        src={mainImage}
+                        alt={item.title}
+                        className={cn(
+                          "w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
+                          isComingSoon ? "blur-sm grayscale brightness-75" : ""
+                        )}
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors" />
+                    </div>
+                  </motion.div>
+
+                  {/* Button below image — only if not coming soon and active */}
+                  {activeIndex === index && (
+                    <div className="mt-4">
+                      <CustomButton
+                        text={isComingSoon ? "Coming Soon" : "Unlock Stories"}
+                        icon={Wallet}
+                        disabled={isComingSoon}
+                        className={cn(
+                          isComingSoon
+                            ? "cursor-not-allowed opacity-60 bg-red-600 hover:bg-red-700"
+                            : "bg-green-600 hover:bg-green-700"
+                        )}
+                        onClick={() => {
+                          if (!isComingSoon) window.open(item.url, "_blank");
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

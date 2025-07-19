@@ -10,7 +10,7 @@ import {
 } from "react";
 
 interface CustomCardProps {
-  image: string;
+  image?: string;
   title: string;
   url?: string;
   timeToRead?: string;
@@ -19,6 +19,7 @@ interface CustomCardProps {
   author?: string;
   contentSnippet: string;
   authorImage?: string;
+  videoLink?: string;
   onClick?: () => void;
 }
 
@@ -31,18 +32,29 @@ export function CustomCard({
   author,
   contentSnippet,
   authorImage,
+  videoLink,
   onClick,
 }: CustomCardProps) {
   const isPositive = change !== undefined && change >= 0;
   const changeColor = isPositive ? "text-green-500" : "text-red-500";
   const changeSymbol = isPositive ? "+" : "";
 
+  // Helper to get thumbnail from YouTube video link
+  const getYouTubeThumbnail = (url: string): string | null => {
+    const match = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+    );
+    return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+  };
+
+  const mainImage =
+    (videoLink && getYouTubeThumbnail(videoLink)) || image || "/placeholder.jpg";
+
   // -----   dynamic line-clamp ----- //
   const snippetBoxRef = useRef<HTMLDivElement>(null);
   const [lineClamp, setLineClamp] = useState<number>(3);
 
   useLayoutEffect(() => {
-    // bail on SSR
     if (typeof window === "undefined") return;
 
     const updateClamp = () => {
@@ -53,8 +65,6 @@ export function CustomCard({
 
       const { lineHeight } = window.getComputedStyle(para);
       const lh = parseFloat(lineHeight || "0");
-
-      // space available for the paragraph (height of the wrapper)
       const available = snippetBoxRef.current.clientHeight;
 
       let lines = Math.floor(available / lh);
@@ -63,9 +73,8 @@ export function CustomCard({
       setLineClamp(lines);
     };
 
-    updateClamp(); // run once on mount
+    updateClamp();
 
-    // respond to card resizing
     const ro = new ResizeObserver(updateClamp);
     snippetBoxRef.current && ro.observe(snippetBoxRef.current);
     window.addEventListener("resize", updateClamp);
@@ -80,8 +89,8 @@ export function CustomCard({
   return (
     <div className="relative overflow-hidden bg-white shadow-lg max-w-[350px] h-full w-full flex flex-col">
       {/* Main Image */}
-      <div className="relative w-full h-64">
-        <Image src={image} alt={title} fill className="object-cover" />
+      <div className="relative w-full h-48">
+        <Image src={mainImage} alt={title} fill className="object-cover" />
 
         {/* Author Info */}
         {author && authorImage && (
@@ -102,9 +111,7 @@ export function CustomCard({
       <div className="bg-[#FFF6C9] text-[#141414] p-4 flex flex-col flex-1">
         {/* Title and Time */}
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-bold text-xl leading-tight flex-1 mr-2">
-            {title}
-          </h3>
+          <h3 className="font-bold text-xl leading-tight flex-1 mr-2">{title}</h3>
           {timeToRead && (
             <div className="flex items-center text-sm text-nowrap mt-1">
               <Clock5 size={16} className="mr-1" />
@@ -135,7 +142,7 @@ export function CustomCard({
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
-              WebkitLineClamp: lineClamp, // ← dynamic!
+              WebkitLineClamp: lineClamp,
             }}
           >
             {contentSnippet}

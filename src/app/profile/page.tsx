@@ -9,7 +9,7 @@ import { Read } from "@/components/Reading";
 
 // Sample data
 const stories = [
-  { image: "/lion.webp", title: "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power", price: 10.0, change: 4.5 },
+  { image: "/lion.webp", title: "From Witnessing Murder to Training the Most Famous Man in Crypto: My Journey from Pain to Power", price: 10.0, change: 4.5, videoLink: "https://www.youtube.com/watch?v=fqP1TOW9XAE&ab_channel=DharMannStudios" },
   { image: "/lion.webp", title: "Cars", price: 15.0, change: 2.0 },
   { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },
   { image: "/lion.webp", title: "The Butterfly Effect", price: 12.0, change: -1.5 },

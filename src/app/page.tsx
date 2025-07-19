@@ -28,6 +28,7 @@ const sampleCarouselItems = [
     image: "/lion.webp",
     title: "Tiffany Story",
     url: "https://example.com/react-patterns",
+    videoLink: "https://www.youtube.com/watch?v=fqP1TOW9XAE&ab_channel=DharMannStudios",
   },
   {
     id: 5,
@@ -35,6 +36,25 @@ const sampleCarouselItems = [
     title: "Tiffany Story",
     url: "https://example.com/typescript-mastery",
   },
+  {
+    id: 6,
+    image: "/lion.webp",
+    title: "Story Drop",
+    url: "#",
+    comingSoon: true,
+    videoLink: "https://youtu.be/9zfQ3J67AZ8",
+},
+{
+    id: 7,
+    image: "/lion.webp",
+    title: "Story Drop",
+    url: "#",
+    comingSoon: true,
+    comingSoonTitle: "4th August 2024",
+    videoLink: "https://youtu.be/9zfQ3J67AZ8",
+},
+
+
 ];
 
 export default function Home() {
